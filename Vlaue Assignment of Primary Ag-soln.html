@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>β-HCG 抗原母液賦值與質量換算機</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* 指定藍色基底 (R14 G57 B99) */
+        .brand-blue {
+            background-color: rgb(14, 57, 99);
+        }
+        .brand-blue-light {
+            background-color: rgb(20, 78, 134);
+        }
+        ::selection {
+            background-color: rgb(14, 57, 99);
+            color: white;
+        }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12 text-base">
+
+<div class="brand-blue text-white shadow-lg mb-8 relative overflow-hidden">
+
+    <div class="absolute inset-0 opacity-[0.06] pointer-events-none"
+         style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-7 relative z-10">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+            <!-- 左側標題 -->
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg brand-blue-light flex items-center justify-center text-lg shrink-0 ring-1 ring-white/10">
+                    🧬
+                </div>
+
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide">
+                        β-HCG 抗原母液賦值與質量換算機
+                    </h1>
+
+                    <p class="text-sm text-slate-300 mt-1 font-medium tracking-wide">
+                        依據作業程序自動化計算母液賦值結果與品質篩檢
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右側首頁按鈕 -->
+            <a href="index.html"
+               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                      bg-white/10 border border-white/30 text-white
+                      hover:bg-white hover:text-[rgb(14,57,99)]
+                      hover:border-white
+                      transition-all duration-150
+                      shadow-sm font-medium text-sm tracking-wide whitespace-nowrap">
+                🏠 回到主控台首頁
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h2 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">⚙️</span>
+                        核心參數配置
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">製備前抗原總質量 (M, 單位 IU)</label>
+                            <input type="number" id="paramM" value="5000" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">抗原母液稀釋至二級抗原液倍數</label>
+                            <input type="number" id="paramDilution" value="500" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">抗原母液製備總體積 (mL)</label>
+                            <input type="number" id="paramVolume" value="1.0" step="0.1" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h2 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center text-sm">🧪</span>
+                        QC 品管判定
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                            <div class="flex justify-between items-center mb-2.5">
+                                <span class="text-sm font-bold text-slate-700">β-HCG 低濃度品管液 (mIU/mL)</span>
+                                <span id="qcClBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap">未評估</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-2.5">
+                                <input type="number" id="qcClR1" placeholder="Rep 1" class="qc-input px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm code-font focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                                <input type="number" id="qcClR2" placeholder="Rep 2" class="qc-input px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm code-font focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                            </div>
+                            <div class="text-xs text-slate-400 space-y-1">
+                                <div>標準: 40.0 ~ 60.0 (放寬: 36.0 ~ 66.0)</div>
+                                <div class="font-bold text-slate-600 code-font" id="qcClAvg">Avg: -</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                            <div class="flex justify-between items-center mb-2.5">
+                                <span class="text-sm font-bold text-slate-700">β-HCG 高濃度品管液 (mIU/mL)</span>
+                                <span id="qcChBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap">未評估</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-2.5">
+                                <input type="number" id="qcChR1" placeholder="Rep 1" class="qc-input px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm code-font focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                                <input type="number" id="qcChR2" placeholder="Rep 2" class="qc-input px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm code-font focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                            </div>
+                            <div class="text-xs text-slate-400 space-y-1">
+                                <div>標準: 4000.0 ~ 6000.0 (放寬: 3600.0 ~ 6600.0)</div>
+                                <div class="font-bold text-slate-600 code-font" id="qcChAvg">Avg: -</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                            <button id="btnQcClear" class="col-span-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors cursor-pointer text-center">
+                                重新輸入
+                            </button>
+                            <button id="btnQcVerify" class="col-span-2 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer text-center shadow-sm">
+                                品管評估
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="analysisCard" class="lg:col-span-2 space-y-6 opacity-30 pointer-events-none transition-all duration-300">
+                
+                <div id="massInputBlock" class="bg-slate-900 text-slate-100 p-6 rounded-2xl shadow-sm transition-colors">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-base font-bold text-white flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-sm">⌨️</span>
+                            數據批次高速貼入區
+                        </h2>
+                        <span class="text-xs bg-white/10 text-slate-300 px-2.5 py-1 rounded-md font-medium">支援 Excel / Tab 複製貼上</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4 pl-9.5 leading-relaxed">
+                        將實測值批次貼在下方。系統具備千分位逗號過濾機制，將依序自動填入 D0 四重複、D1 四重複、D2 四重複...
+                    </p>
+                    <textarea id="massInput" rows="3" placeholder="範例：0.2, 0.3, 0.1, 0.2, 5,770.5, 6,438.9, 5,846.3, 5,810.9 ..." class="w-full p-4 bg-white text-slate-900 border border-slate-700 rounded-xl text-base code-font focus:outline-none focus:ring-2 focus:ring-blue-400/40 font-medium placeholder-slate-400 shadow-inner tracking-wide"></textarea>
+                    <div class="flex justify-between items-center mt-3 text-xs md:text-sm">
+                        <span id="parsedCount" class="font-bold text-slate-300 code-font">已偵測到：0 筆有效數據</span>
+                        <button id="clearMassInput" class="text-slate-400 hover:text-rose-400 font-bold transition-colors cursor-pointer">清除數據</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h2 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">📊</span>
+                        樣本實測矩陣與基準自動篩選
+                    </h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider font-bold text-[11px]">
+                                    <th class="py-3 px-3 rounded-l-lg">樣本</th>
+                                    <th class="py-3 px-2 w-16 text-center">倍數</th>
+                                    <th class="py-3 px-2 text-center" colspan="4">重複測值 (mIU/mL)</th>
+                                    <th class="py-3 px-2 text-right">平均值 (Avg)</th>
+                                    <th class="py-3 px-3 rounded-r-lg text-center w-24">狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matrixBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr id="row_D0" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900 text-sm whitespace-nowrap">D0</td>
+                                    <td class="py-3 px-2 text-center"><span class="code-font text-slate-300 text-sm">—</span></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D0_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D0_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D0_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D0_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D0">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D0"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D1" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D1</td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D1" value="2" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D1_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D1_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D1_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D1_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D1">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D1"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D2" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D2</td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D2" value="4" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D2_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D2_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D2_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D2_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D2">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D2"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D3" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D3</td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D3" value="8" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D3_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D3_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D3_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D3_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D3">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D3"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D4" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D4</td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D4" value="16" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D4_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D4_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D4_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D4_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D4">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D4"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D5" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D5 <span class="text-[11px] text-blue-600 font-semibold">(自訂)</span></td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D5" placeholder="倍數" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D5_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D5_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D5_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D5_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D5">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D5"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                                <tr id="row_D6" class="transition-colors duration-200">
+                                    <td class="py-3 px-3 font-bold text-slate-900">D6 <span class="text-[11px] text-blue-600 font-semibold">(自訂)</span></td>
+                                    <td class="py-3 px-2"><input type="number" id="factor_D6" placeholder="倍數" class="w-12 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm font-bold text-slate-600 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D6_0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D6_1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D6_2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-1"><input type="text" id="v_D6_3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-center code-font text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all row-input"></td>
+                                    <td class="py-3 px-3 text-right font-bold code-font text-slate-900 text-base" id="avg_D6">-</td>
+                                    <td class="py-3 px-3 text-center" id="status_D6"><span class="text-slate-400 text-xs">-</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-6 flex flex-col md:flex-row justify-end gap-3">
+                        <button id="btnResetAll" class="w-full md:w-auto px-7 py-3.5 bg-white hover:bg-slate-50 text-slate-600 font-bold rounded-xl border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-base">
+                            🧹 一鍵清除
+                        </button>
+                        <button id="btnCalculate" class="w-full md:w-auto px-7 py-3.5 brand-blue hover:brightness-110 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-base">
+                            🚀 執行母液賦值與計算
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border-t-4 border-rose-500 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-start gap-4">
+                <div class="bg-rose-50 text-rose-600 w-11 h-11 rounded-full shrink-0 text-lg flex items-center justify-center">⚠️</div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900" id="modalTitle">品管異常提醒</h3>
+                    <p class="text-base text-slate-600 mt-2 leading-relaxed font-medium" id="modalMessage">請暫停操作，釐清品管異常原因</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="btnCloseModal" class="px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="drawerOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
+    <div id="resultDrawer" class="fixed top-0 right-0 h-full w-full md:w-[480px] bg-slate-900 text-slate-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-40 flex flex-col text-sm">
+        <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><span class="text-base">📋</span> 賦值分析報告</h2>
+                <p class="text-xs text-slate-500 mt-0.5 code-font">Value Assignment Summary</p>
+            </div>
+            <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1.5 text-lg font-bold cursor-pointer rounded-lg hover:bg-white/5 transition-colors">✕</button>
+        </div>
+
+        <div class="p-6 space-y-6 overflow-y-auto flex-1">
+            <div id="finalVerdictBox" class="p-5 rounded-xl text-center border">
+                <div class="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1.5">綜合判定結果</div>
+                <div id="finalVerdictText" class="text-3xl font-black tracking-wider">PASS</div>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><span>🔍</span> 濃度逆向回推軌跡</h3>
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">1. 選用核心基準樣本</span>
+                        <span class="font-bold text-white code-font" id="traceSample">-</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">2. 基準平均濃度 (<span class="code-font">CDi</span>)</span>
+                        <span class="font-bold text-emerald-400 code-font" id="traceCDi">- mIU/mL</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">3. 二級抗原液濃度 (<span class="code-font">CSA = CDi × Di</span>)</span>
+                        <span class="font-bold text-blue-400 code-font" id="traceCSA">- mIU/mL</span>
+                    </div>
+                    <div class="border-t border-slate-800 pt-3 flex justify-between items-center text-base">
+                        <span class="text-slate-300 font-medium">4. 抗原母液賦值 (<span class="code-font">CA</span>)</span>
+                        <span class="font-black text-amber-400 code-font" id="traceCA">- IU/mL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><span>⚖️</span> 抗原總質量比較</h3>
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">製備前總質量 (M)</span>
+                        <span class="font-semibold text-slate-200 code-font" id="massBefore">- IU</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">製備後實測總質量 (M')</span>
+                        <span class="font-semibold text-slate-200 code-font" id="massAfter">- IU</span>
+                    </div>
+                    <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                        <span class="text-slate-300">總質量差異率 (%)</span>
+                        <span class="text-base font-bold code-font" id="massDiffPercent">- %</span>
+                    </div>
+                    <div class="text-xs text-slate-500 leading-normal">
+                        *依作業程序，配製前後總質量差異率必須維持在 <span class="text-slate-300 font-semibold">±20%</span> 範圍內。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 元素控制宣告
+        const btnQcVerify = document.getElementById('btnQcVerify');
+        const btnQcClear = document.getElementById('btnQcClear');
+        const analysisCard = document.getElementById('analysisCard');
+        
+        const massInput = document.getElementById('massInput');
+        const parsedCount = document.getElementById('parsedCount');
+        const clearMassInput = document.getElementById('clearMassInput');
+        const btnCalculate = document.getElementById('btnCalculate');
+        const btnResetAll = document.getElementById('btnResetAll');
+        
+        const alertModal = document.getElementById('alertModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+
+        const resultDrawer = document.getElementById('resultDrawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+        const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+
+        const sampleRows = ['D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6'];
+
+        // 品管實測濃度輸入框：按下 Enter 等同點選「品管評估」
+        document.querySelectorAll('.qc-input').forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnQcVerify.click();
+                }
+            });
+        });
+
+        // 品管控制：「重新輸入」按鈕
+        btnQcClear.addEventListener('click', () => {
+            document.getElementById('qcClR1').value = '';
+            document.getElementById('qcClR2').value = '';
+            document.getElementById('qcChR1').value = '';
+            document.getElementById('qcChR2').value = '';
+            
+            // 重設看板與徽章燈號
+            const clBadge = document.getElementById('qcClBadge');
+            const clAvgLabel = document.getElementById('qcClAvg');
+            const chBadge = document.getElementById('qcChBadge');
+            const chAvgLabel = document.getElementById('qcChAvg');
+
+            clBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap";
+            clBadge.textContent = "未評估";
+            clAvgLabel.textContent = "Avg: -";
+
+            chBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap";
+            chBadge.textContent = "未評估";
+            chAvgLabel.textContent = "Avg: -";
+
+            // 重新鎖定右側區塊
+            lockAnalysisCard();
+        });
+
+        // 【核心機制】：品管評估手動按鈕事件把關
+        btnQcVerify.addEventListener('click', () => {
+            const cl1 = parseFloat(document.getElementById('qcClR1').value);
+            const cl2 = parseFloat(document.getElementById('qcClR2').value);
+            const ch1 = parseFloat(document.getElementById('qcChR1').value);
+            const ch2 = parseFloat(document.getElementById('qcChR2').value);
+
+            const clBadge = document.getElementById('qcClBadge');
+            const clAvgLabel = document.getElementById('qcClAvg');
+            const chBadge = document.getElementById('qcChBadge');
+            const chAvgLabel = document.getElementById('qcChAvg');
+
+            // 1. 基本空值防呆
+            if (isNaN(cl1) || isNaN(cl2) || isNaN(ch1) || isNaN(ch2)) {
+                triggerModal("請填入低濃度與高濃度品管液的雙重複實測數據以供判定。");
+                lockAnalysisCard();
+                return;
+            }
+
+            const clAvg = (cl1 + cl2) / 2;
+            const chAvg = (ch1 + ch2) / 2;
+
+            clAvgLabel.textContent = `Avg: ${clAvg.toFixed(1)}`;
+            chAvgLabel.textContent = `Avg: ${chAvg.toFixed(1)}`;
+
+            let clPassed = false;
+            let chPassed = false;
+
+            // 2. 低濃度品管液判定機制
+            if (clAvg >= 40.0 && clAvg <= 60.0) {
+                clBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 whitespace-nowrap";
+                clBadge.textContent = "規格書符合";
+                clPassed = true;
+            } else if (clAvg >= 36.0 && clAvg <= 66.0) {
+                clBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 whitespace-nowrap";
+                clBadge.textContent = "放寬 10% 符合";
+                clPassed = true;
+            } else {
+                clBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 whitespace-nowrap";
+                clBadge.textContent = "異常超標";
+            }
+
+            // 3. 高濃度品管液判定機制
+            if (chAvg >= 4000.0 && chAvg <= 6000.0) {
+                chBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 whitespace-nowrap";
+                chBadge.textContent = "規格書符合";
+                chPassed = true;
+            } else if (chAvg >= 3600.0 && chAvg <= 6600.0) {
+                chBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 whitespace-nowrap";
+                chBadge.textContent = "放寬 10% 符合";
+                chPassed = true;
+            } else {
+                chBadge.className = "text-xs font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 whitespace-nowrap";
+                chBadge.textContent = "異常超標";
+            }
+
+            // 4. 綜合把關與字卡解鎖阻斷機制
+            if (clPassed && chPassed) {
+                // 通過判定，右側卡片亮起
+                unlockAnalysisCard();
+            } else {
+                // 任一項不符合，鎖定區塊並拋出異常警報視窗
+                lockAnalysisCard();
+                triggerModal("請暫停操作，釐清品管異常原因");
+            }
+        });
+
+        function lockAnalysisCard() {
+            analysisCard.classList.add('opacity-30', 'pointer-events-none');
+        }
+
+        function unlockAnalysisCard() {
+            analysisCard.classList.remove('opacity-30', 'pointer-events-none');
+        }
+
+        // 大批量數據貼入監聽與自動分行 (具備千分位逗號過濾機制)
+        massInput.addEventListener('input', parseAndDistributeMassData);
+        clearMassInput.addEventListener('click', () => {
+            massInput.value = '';
+            parseAndDistributeMassData();
+        });
+
+        // 綁定手動修改輸入格即時計算平均
+        document.querySelectorAll('.row-input').forEach(input => {
+            input.addEventListener('input', calculateRowAverages);
+        });
+
+        function parseAndDistributeMassData() {
+            let rawText = massInput.value;
+            
+            // 過濾千分位純逗號 (抓出前後都是數字的逗號將其移除)
+            rawText = rawText.replace(/(\d),(?=\d)/g, '$1');
+
+            // 提取有效數值
+            const numbers = rawText.match(/[-+]?[0-9]*\.?[0-9]+/g);
+            
+            if (!numbers) {
+                parsedCount.textContent = `已偵測到：0 筆有效數據`;
+                return;
+            }
+            parsedCount.textContent = `已偵測到：${numbers.length} 筆有效數據`;
+
+            let numIdx = 0;
+            for (let i = 0; i < sampleRows.length; i++) {
+                const row = sampleRows[i];
+                
+                if ((row === 'D5' || row === 'D6') && !document.getElementById(`factor_${row}`).value && numIdx >= numbers.length) {
+                    continue;
+                }
+
+                for (let r = 0; r < 4; r++) {
+                    const inputTarget = document.getElementById(`v_${row}_${r}`);
+                    if (numIdx < numbers.length) {
+                        inputTarget.value = parseFloat(numbers[numIdx]).toFixed(2);
+                        numIdx++;
+                    }
+                }
+            }
+            calculateRowAverages();
+        }
+
+        // 計算各稀釋列四重複平均
+        function calculateRowAverages() {
+            sampleRows.forEach(row => {
+                let sum = 0;
+                let count = 0;
+                for (let r = 0; r < 4; r++) {
+                    const val = parseFloat(document.getElementById(`v_${row}_${r}`).value);
+                    if (!isNaN(val)) {
+                        sum += val;
+                        count++;
+                    }
+                }
+                const avgLabel = document.getElementById(`avg_${row}`);
+                const statusLabel = document.getElementById(`status_${row}`);
+                
+                if (count === 4) {
+                    const avg = sum / 4;
+                    avgLabel.textContent = avg.toFixed(2);
+                    
+                    if (row === 'D0') {
+                        if (avg < 1.0) {
+                            statusLabel.innerHTML = `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[11px] font-bold">背景正常</span>`;
+                        } else {
+                            statusLabel.innerHTML = `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md text-[11px] font-bold">異常 &ge;1.0</span>`;
+                        }
+                    } else {
+                        if (avg >= 1.0 && avg <= 10000.0) {
+                            statusLabel.innerHTML = `<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[11px] border border-blue-100 font-bold">落入線性</span>`;
+                        } else {
+                            statusLabel.innerHTML = `<span class="bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md text-[11px] font-bold">超限不採計</span>`;
+                        }
+                    }
+                } else {
+                    avgLabel.textContent = '-';
+                    statusLabel.innerHTML = `<span class="text-slate-400 text-xs">-</span>`;
+                }
+            });
+        }
+
+        // 警報提醒視窗控制
+        function triggerModal(msg) {
+            modalMessage.textContent = msg;
+            alertModal.classList.remove('hidden');
+        }
+        btnCloseModal.addEventListener('click', () => alertModal.classList.add('hidden'));
+
+        function closeDrawer() {
+            resultDrawer.classList.add('translate-x-full');
+            drawerOverlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+        btnCloseDrawer.addEventListener('click', closeDrawer);
+        drawerOverlay.addEventListener('click', closeDrawer);
+
+        function resetRowHighlights() {
+            sampleRows.forEach(row => {
+                const tr = document.getElementById(`row_${row}`);
+                tr.className = "transition-colors duration-200 hover:bg-slate-50";
+            });
+        }
+
+        // 一鍵清除：清空批次貼入區與樣本實測矩陣所有數據
+        btnResetAll.addEventListener('click', () => {
+            massInput.value = '';
+            parsedCount.textContent = `已偵測到：0 筆有效數據`;
+
+            sampleRows.forEach(row => {
+                for (let r = 0; r < 4; r++) {
+                    document.getElementById(`v_${row}_${r}`).value = '';
+                }
+                document.getElementById(`avg_${row}`).textContent = '-';
+                document.getElementById(`status_${row}`).innerHTML = `<span class="text-slate-400 text-xs">-</span>`;
+            });
+
+            resetRowHighlights();
+            closeDrawer();
+        });
+
+        // ================= 算力核心邏輯引擎 =================
+        btnCalculate.addEventListener('click', () => {
+            resetRowHighlights();
+
+            // 1. 再次防呆背景基線 D0
+            const d0Avg = parseFloat(document.getElementById('avg_D0').textContent);
+            if (isNaN(d0Avg)) {
+                triggerModal("請完整輸入 D0 稀釋液實測背景濃度數據。");
+                return;
+            }
+            if (d0Avg >= 1.0) {
+                triggerModal("抗原稀釋液濃度異常，請暫停操作，並釐清異常原因。");
+                return;
+            }
+
+            // 2. 核心自動尋找與篩選線性最優樣本列
+            let selectedRow = null;
+            let lowestFactor = Infinity;
+            let selectedAvg = 0;
+
+            const targetSamples = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'];
+            for (let i = 0; i < targetSamples.length; i++) {
+                const row = targetSamples[i];
+                const factorInput = document.getElementById(`factor_${row}`);
+                const avgText = document.getElementById('avg_' + row).textContent;
+                
+                const factor = parseFloat(factorInput.value);
+                const avg = parseFloat(avgText);
+
+                if (!isNaN(factor) && !isNaN(avg)) {
+                    if (avg >= 1.0 && avg <= 10000.0) {
+                        if (factor < lowestFactor) {
+                            lowestFactor = factor;
+                            selectedRow = row;
+                            selectedAvg = avg;
+                        }
+                    }
+                }
+            }
+
+            if (!selectedRow) {
+                triggerModal("未有任何實測組別之平均濃度落在 1.0 ~ 10,000.0 mIU/mL 的採計線性範圍內。");
+                return;
+            }
+
+            // 3. 觸發視覺採用凸顯
+            const targetTr = document.getElementById(`row_${selectedRow}`);
+            targetTr.className = "bg-emerald-50 border-y border-emerald-200 font-bold transition-all duration-300 shadow-[inset_3px_0_0_0_theme(colors.emerald.500)]";
+            document.getElementById(`status_${selectedRow}`).innerHTML = `<span class="bg-emerald-600 text-white font-bold px-2 py-1 rounded-md text-[11px] shadow-sm inline-flex flex-col items-center leading-tight gap-0.5"><span>★</span><span>基準採用</span></span>`;
+
+            // 4. 逆向工程公式計算
+            const paramDilution = parseFloat(document.getElementById('paramDilution').value); 
+            const paramM = parseFloat(document.getElementById('paramM').value); 
+            const paramVolume = parseFloat(document.getElementById('paramVolume').value);
+
+            if (isNaN(paramDilution) || isNaN(paramM) || isNaN(paramVolume) || paramVolume <= 0) {
+                triggerModal("請確認核心參數配置區數值是否填寫正確。");
+                return;
+            }
+
+            // 二級抗原液濃度 CSA = CDi * 樣本自訂稀釋倍數
+            const csa = selectedAvg * lowestFactor;
+            // 抗原母液最終實測賦值濃度 CA = CSA * 母液稀釋倍數 / 1000 單位換算
+            const ca = (csa * paramDilution) / 1000;
+
+            // 質量守恆追溯：製備後實測總質量 M' = CA * 體積
+            const massAfterVal = ca * paramVolume;
+            // 質量偏離率百分比 = (M - M') / M * 100%
+            const diffPercent = ((paramM - massAfterVal) / paramM) * 100;
+
+            // 5. 輸出整合數據至分析抽屜
+            document.getElementById('traceSample').textContent = `${selectedRow} (稀釋 ${lowestFactor} 倍)`;
+            document.getElementById('traceCDi').textContent = `${selectedAvg.toFixed(2)} mIU/mL`;
+            document.getElementById('traceCSA').textContent = `${csa.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} mIU/mL`;
+            document.getElementById('traceCA').textContent = `${ca.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU/mL`;
+            
+            document.getElementById('massBefore').textContent = `${paramM.toLocaleString()} IU`;
+            document.getElementById('massAfter').textContent = `${massAfterVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU`;
+            document.getElementById('massDiffPercent').textContent = `${diffPercent.toFixed(2)} %`;
+
+            // 6. 最終質量偏離判定界線為 ±20%
+            const verdictBox = document.getElementById('finalVerdictBox');
+            const verdictText = document.getElementById('finalVerdictText');
+            const massDiffPercentLabel = document.getElementById('massDiffPercent');
+
+            if (Math.abs(diffPercent) <= 20.0) {
+                verdictBox.className = "p-5 rounded-xl text-center border border-emerald-500/30 bg-emerald-950/40 text-emerald-400";
+                verdictText.textContent = "PASS";
+                massDiffPercentLabel.className = "text-base font-bold code-font text-emerald-400";
+            } else {
+                verdictBox.className = "p-5 rounded-xl text-center border border-rose-500/30 bg-rose-950/40 text-rose-400";
+                verdictText.textContent = "FAIL / OOS";
+                massDiffPercentLabel.className = "text-base font-bold code-font text-rose-400";
+            }
+
+            // 7. 平滑滑出右側分析抽屜
+            resultDrawer.classList.remove('translate-x-full');
+            drawerOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        });
+    </script>
+</body>
+</html>

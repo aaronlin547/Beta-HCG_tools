@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>β-HCG 工作液體積換算工具</title>
+<script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-inactive { background-color: #f1f5f9; color: #475569; }
+        .tab-active { background-color: #1d4ed8; color: #ffffff; font-weight: 700; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .text-custom-black { color: rgb(14, 57, 99); }
+        .border-custom-black { border-color: rgb(14, 57, 99); }
+    </style>
+<header class="bg-blue-900 text-white shadow-md p-4 mb-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+        <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
+            🧪 β-HCG 工作液體積換算工具
+        </h1>
+
+        <a href="index.html"
+           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                  bg-white/10 border border-white/30 text-white
+                  hover:bg-white hover:text-[rgb(14,57,99)]
+                  transition-all duration-150 text-sm font-medium">
+            🏠 回到主控台首頁
+        </a>
+
+    </div>
+</header>
+    <main class="max-w-7xl mx-auto px-4 pb-12">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-2 bg-slate-200 rounded-xl shadow-inner">
+            <button id="tab-cal" onclick="switchTab('cal')" class="py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 tab-active">
+                🔄 β-HCG 校正液工作液配製
+            </button>
+            <button id="tab-qc" onclick="switchTab('qc')" class="py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                🎯 β-HCG 品管液工作液配製
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <section class="bg-white p-6 rounded-xl shadow-md border border-slate-200 lg:col-span-1 h-fit">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                    📥 <span id="input-title">校正液生產參數輸入</span>
+                </h2>
+                
+                <div class="space-y-4 mb-6" id="input-container">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1 flex justify-between">
+                            <span>抗原母液濃度 (C<sub>A</sub>)</span>
+                            <span class="text-xs text-blue-600 font-bold">IU/mL</span>
+                        </label>
+                        <input type="number" id="input-ca-cal" step="any" min="0.0001" oninput="syncConcentration()" placeholder="請輸入校正液用抗原母液濃度" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg text-sm bg-amber-50/40">
+                        <input type="number" id="input-ca-qc" step="any" min="0.0001" placeholder="請輸入品管液用抗原母液濃度" class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg text-sm bg-amber-50/40 hidden">
+                        
+                        <div id="sync-checkbox-wrapper" class="mt-2 flex items-center gap-2">
+                            <input type="checkbox" id="sync-ca-flag" onchange="syncConcentration()" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+                            <label for="sync-ca-flag" class="text-xs font-medium text-slate-600 select-none cursor-pointer">
+                                同步將此母液濃度帶入品管液分頁
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-200">
+
+                    <div id="batch-group-cal" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
+                                <span>β-HCG C1 目標批量</span>
+                                <span class="text-xs text-slate-400">vials</span>
+                            </label>
+                            <input type="number" id="batch-c1" min="0" value="25" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
+                                <span>β-HCG C2 目標批量</span>
+                                <span class="text-xs text-slate-400">vials</span>
+                            </label>
+                            <input type="number" id="batch-c2" min="0" value="25" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
+                                <span>β-HCG C3 目標批量</span>
+                                <span class="text-xs text-slate-400">vials</span>
+                            </label>
+                            <input type="number" id="batch-c3" min="0" value="25" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div id="batch-group-qc" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
+                                <span>β-HCG CL 目標批量</span>
+                                <span class="text-xs text-slate-400">vials</span>
+                            </label>
+                            <input type="number" id="batch-cl" min="0" value="45" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 flex justify-between">
+                                <span>β-HCG CH 目標批量</span>
+                                <span class="text-xs text-slate-400">vials</span>
+                            </label>
+                            <input type="number" id="batch-ch" min="0" value="45" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">損耗係數 (Loss Factor)</label>
+                        <input type="number" id="input-loss" step="0.01" min="1" value="1.2" class="w-full px-3 py-2 border-2 border-green-300 rounded-lg text-sm bg-green-50/10">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="executeCalculation()" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1 text-sm sm:text-base tracking-wide">
+                        🚀 執行計算
+                    </button>
+                    <button onclick="clearToDefaults()" class="col-span-1 bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-2 rounded-xl shadow-md transition-all flex items-center justify-center gap-1 text-sm sm:text-base tracking-wide">
+                        🧼 清除
+                    </button>
+                </div>
+            </section>
+
+            <section class="lg:col-span-2">
+                <div id="result-box" class="bg-white p-6 rounded-xl shadow-md border border-slate-200 min-h-[400px] flex flex-col justify-center items-center text-slate-400">
+                    <div class="text-center space-y-2">
+                        <p class="text-6xl">📊</p>
+                        <p class="text-base font-bold text-slate-600">請在左側輸入參數，並點擊「執行計算」或按鍵盤 Enter</p>
+                        <p class="text-xs text-slate-400">計算結果將在此處以獨立字卡格式呈現</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        let currentTab = 'cal';
+
+        // 監聽鍵盤 Enter 鍵
+        document.getElementById('input-container').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                executeCalculation();
+            }
+        });
+
+        // 跨分頁抗原母液濃度同步處理
+        function syncConcentration() {
+            const isSync = document.getElementById('sync-ca-flag').checked;
+            if (isSync) {
+                const calValue = document.getElementById('input-ca-cal').value;
+                document.getElementById('input-ca-qc').value = calValue;
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnCal = document.getElementById('tab-cal');
+            const btnQc = document.getElementById('tab-qc');
+            
+            if(tab === 'cal') {
+                btnCal.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 tab-active";
+                btnQc.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
+                document.getElementById('sync-checkbox-wrapper').classList.remove('hidden');
+                resetResultBox();
+            } else {
+                btnQc.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 tab-active";
+                btnCal.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
+                document.getElementById('sync-checkbox-wrapper').classList.add('hidden');
+                
+                const isSync = document.getElementById('sync-ca-flag').checked;
+                const qcCa = document.getElementById('input-ca-qc').value;
+                if (isSync && qcCa) {
+                    executeCalculation();
+                } else {
+                    resetResultBox();
+                }
+            }
+
+            document.getElementById('input-title').innerText = tab === 'cal' ? '校正液生產參數輸入' : '品管液生產參數輸入';
+            document.getElementById('input-ca-cal').classList.toggle('hidden', tab !== 'cal');
+            document.getElementById('input-ca-qc').classList.toggle('hidden', tab !== 'qc');
+            document.getElementById('batch-group-cal').classList.toggle('hidden', tab !== 'cal');
+            document.getElementById('batch-group-qc').classList.toggle('hidden', tab !== 'qc');
+        }
+
+        function clearToDefaults() {
+            document.getElementById('input-ca-cal').value = "";
+            document.getElementById('input-ca-qc').value = "";
+            document.getElementById('sync-ca-flag').checked = false;
+            document.getElementById('input-loss').value = "1.2";
+            document.getElementById('batch-c1').value = "25";
+            document.getElementById('batch-c2').value = "25";
+            document.getElementById('batch-c3').value = "25";
+            document.getElementById('batch-cl').value = "45";
+            document.getElementById('batch-ch').value = "45";
+            resetResultBox();
+        }
+
+        function resetResultBox() {
+            const rBox = document.getElementById('result-box');
+            rBox.className = "bg-white p-6 rounded-xl shadow-md border border-slate-200 min-h-[400px] flex flex-col justify-center items-center text-slate-400";
+            rBox.innerHTML = `
+                <div class="text-center space-y-2">
+                    <p class="text-6xl">📊</p>
+                    <p class="text-base font-bold text-slate-600">請在左側輸入參數，並點擊「執行計算」或按鍵盤 Enter</p>
+                    <p class="text-xs text-slate-400">計算結果將在此處以獨立字卡格式呈現</p>
+                </div>
+            `;
+        }
+
+        function round3(num) {
+            return (Math.round(num * 1000) / 1000).toFixed(3);
+        }
+
+        // 字卡生成器：原基準體積修正為「淺灰色、細體、無刪除線」；增量標籤修正為「[建議配製增量0.12%: ...]」
+        function buildCardHtml(title, subTitle, conc, sourceText, sourceVol, diluentVol, totalVol, overfillConfig = null, customRemark = "") {
+            let leftColumnContent = `
+                <div class="text-[18px] font-bold text-green-600">${sourceVol}</div>
+                <div class="text-[14px] font-normal text-green-600 mt-0.5">${sourceText}</div>
+            `;
+
+            if (overfillConfig) {
+                const overfillVol = overfillConfig.volume;
+                const finalActual = overfillConfig.actualTotal;
+                leftColumnContent = `
+                    <div class="text-[14px] font-normal text-slate-400 opacity-80">基準體積: ${sourceVol}</div>
+                    <div class="text-[14px] font-normal text-green-600 mt-0.5">${sourceText}</div>
+                    <div class="text-[14px] font-semibold text-orange-600 mt-1">[建議配製增量0.12%: +${overfillVol}]</div>
+                    <div class="text-[14px] font-black text-custom-black mt-2 pt-1 border-t border-dashed border-slate-300">
+                        ➡️ 現場實際抽取: <span class="text-[18px] text-green-600">${finalActual}</span>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="bg-white p-5 rounded-xl shadow-sm border-2 border-slate-200 space-y-3 text-left">
+                    <div>
+                        <div class="text-[18px] font-bold text-custom-black">${title}</div>
+                        <div class="text-[14px] text-slate-400 font-medium mt-0.5">${subTitle}</div>
+                        <div class="text-[14px] text-slate-400 font-medium">${conc}</div>
+                    </div>
+                    
+                    <div class="overflow-hidden rounded-lg border border-slate-300">
+                        <table class="w-full text-center border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-custom-black text-[18px] font-bold border-b border-slate-300">
+                                    <th class="py-2.5 px-4 border-r border-slate-300 bg-indigo-50/20 w-1/2 text-custom-black">高濃度抗原液取用量 (mL)</th>
+                                    <th class="py-2.5 px-4 bg-emerald-50/20 w-1/2 text-custom-black">抗原稀釋液取用量 (mL)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-slate-300">
+                                    <td class="py-4 px-4 border-r border-slate-300 bg-white valign-top">
+                                        ${leftColumnContent}
+                                    </td>
+                                    <td class="py-4 px-4 bg-white text-[18px] font-bold text-slate-600">
+                                        <div class="${overfillConfig ? 'mt-6' : ''}">${diluentVol}</div>
+                                        ${overfillConfig ? '<div class="text-[12px] font-normal text-slate-400 mt-1">(保持原體積不扣除)</div>' : ''}
+                                    </td>
+                                </tr>
+                                <tr class="bg-slate-100 text-[18px] font-bold text-custom-black">
+                                    <td colspan="2" class="py-3 px-4 text-center border-t border-slate-300">
+                                        總需求體積: ${totalVol} mL
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    ${customRemark}
+                </div>
+            `;
+        }
+
+        function executeCalculation() {
+            const loss = parseFloat(document.getElementById('input-loss').value) || 1.2;
+            const caInput = document.getElementById(currentTab === 'cal' ? 'input-ca-cal' : 'input-ca-qc');
+            const ca = parseFloat(caInput.value) || null;
+
+            if (!ca) {
+                caInput.focus();
+                alert('請先輸入當前頁面的「抗原母液濃度 (CA)」，再執行計算。');
+                return;
+            }
+
+            let cardsHtml = '';
+            const factorAW = ca / 550;
+            const titleText = currentTab === 'cal' ? 'β-HCG 校正液工作液 - 配製指引結果' : 'β-HCG 品管液工作液 - 配製指引結果';
+
+            if (currentTab === 'cal') {
+                const bC1 = parseFloat(document.getElementById('batch-c1').value) || 0;
+                const bC2 = parseFloat(document.getElementById('batch-c2').value) || 0;
+                const bC3 = parseFloat(document.getElementById('batch-c3').value) || 0;
+
+                const vC1 = bC1 * 1 * loss;
+                const vC2 = bC2 * 1 * loss;
+                const vC3 = bC3 * 1 * loss;
+                const vAW = (vC3 / 100) * loss;
+
+                const awsSource = vAW / factorAW;
+                const awsDiluent = vAW - awsSource;
+
+                const c2Overfill = vC2 * 0.0012;
+                const c2BaseSource = vC2 / 100;
+                const c2ActualSource = c2BaseSource + c2Overfill;
+
+                const remarkC1 = `<div class="text-xs font-bold text-red-600 px-1">🛑 備註：直接由抗原稀釋液分裝，不添加抗原</div>`;
+                cardsHtml += buildCardHtml(
+                    "校正液C1工作液", "(CWS-1)", "預期目標濃度: < 1.0 mIU/mL",
+                    "(不需加入抗原)", "0.000", round3(vC1), round3(vC1), null, remarkC1
+                );
+
+                cardsHtml += buildCardHtml(
+                    "抗原工作液", "(AWS)", "預期目標濃度: 550.0 IU/mL",
+                    "(取用抗原母液)", round3(awsSource), round3(awsDiluent), round3(vAW)
+                );
+
+                cardsHtml += buildCardHtml(
+                    "校正液C3工作液", "(CWS-3)", "預期目標濃度: 5,500.0 mIU/mL",
+                    "(取用抗原工作液(AWS))", round3(vC3 / 100), round3(vC3 - (vC3 / 100)), round3(vC3)
+                );
+
+                cardsHtml += buildCardHtml(
+                    "校正液C2工作液", "(CWS-2)", "預期目標濃度: 55.0 mIU/mL",
+                    "(取用校正液C3工作液(CWS-3))", round3(c2BaseSource), round3(vC2 - c2BaseSource), round3(vC2),
+                    { volume: round3(c2Overfill), actualTotal: round3(c2ActualSource) }
+                );
+
+            } else {
+                const bCL = parseFloat(document.getElementById('batch-cl').value) || 0;
+                const bCH = parseFloat(document.getElementById('batch-ch').value) || 0;
+
+                const vCL = bCL * 1 * loss;
+                const vCH = bCH * 1 * loss;
+                const vAW_QC = (vCH / 100) * loss;
+
+                const awsQCSource = vAW_QC / factorAW;
+                const awsQCDiluent = vAW_QC - awsQCSource;
+
+                const clOverfill = vCL * 0.0012;
+                const clBaseSource = vCL / 100;
+                const clActualSource = clBaseSource + clOverfill;
+
+                cardsHtml += buildCardHtml(
+                    "抗原工作液", "(AWS)", "預期目標濃度: 550.0 IU/mL",
+                    "(取用抗原母液)", round3(awsQCSource), round3(awsQCDiluent), round3(vAW_QC)
+                );
+
+                cardsHtml += buildCardHtml(
+                    "高濃度品管液工作液", "(QWS-CH)", "預期目標濃度: 5,500.0 mIU/mL",
+                    "(取用抗原工作液(AWS))", round3(vCH / 100), round3(vCH - (vCH / 100)), round3(vCH)
+                );
+
+                cardsHtml += buildCardHtml(
+                    "低濃度品管液工作液", "(QWS-CL)", "預期目標濃度: 55.0 mIU/mL",
+                    "(取用高濃度品管液工作液(QWS-CH))", round3(clBaseSource), round3(vCL - clBaseSource), round3(vCL),
+                    { volume: round3(clOverfill), actualTotal: round3(clActualSource) }
+                );
+            }
+
+            const resultBox = document.getElementById('result-box');
+            resultBox.className = "lg:col-span-2 space-y-6 block";
+            resultBox.innerHTML = `
+                <h3 class="text-[18px] font-bold text-custom-black mb-4 flex items-center gap-2 border-b-2 border-slate-300 pb-2">
+                    📋 ${titleText}
+                </h3>
+                <div class="space-y-6">
+                    ${cardsHtml}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

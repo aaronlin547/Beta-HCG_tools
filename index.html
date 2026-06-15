@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GB CL β-HCG-Calibrator & -Control 生產應用平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* 統一平台深藍色基底 (RGB 14, 57, 99) */
+        .brand-blue {
+            background-color: rgb(14, 57, 99);
+        }
+        .brand-blue-hover:hover {
+            background-color: rgb(20, 78, 134);
+        }
+        .text-brand-blue {
+            color: rgb(14, 57, 99);
+        }
+        .border-brand-blue {
+            border-color: rgb(14, 57, 99);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <header class="brand-blue text-white shadow-lg relative overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.05] pointer-events-none" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 20px 20px;"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 relative">
+            <div class="flex items-center gap-3 text-center sm:text-left w-full">
+                <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl shrink-0 shadow-inner">🧪</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-wide leading-tight">GB CL β-HCG-Calibrator & -Control 生產應用平台</h1>
+                    <p class="text-xs text-slate-300 mt-1 tracking-wider">GB CL β-HCG-Calibrator & -Control Production Application Platform</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col justify-center">
+        
+        <div class="text-center max-w-3xl mx-auto mb-10 md:mb-14 px-2">
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-wide mb-3">歡迎使用β-HCG校正液與品管液製造主控台</h2>
+            <p class="text-sm text-slate-500 leading-relaxed">
+                本入口網頁安全連結至生產流程中的三大核心體積/濃度計算系統。介面支援實驗室現場手持裝置即時操作。
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto w-full">
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md hover:border-slate-300/80 transition-all duration-200">
+                <div class="space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-brand-blue flex items-center justify-center text-2xl shadow-sm">📊</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 tracking-wide leading-snug">抗原母液賦值與質量換算</h3>
+                        <p class="text-xs text-slate-400 font-medium mt-1 leading-normal">
+                            Value Assignment of Primary Ag-soln &<br>Mass Conversion
+                        </p>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed pt-1">
+                        整合多點批次自動化防呆判定、抗原濃度合規性快速檢查、基線評估及校正體積矩陣精準試算。
+                    </p>
+                </div>
+                <div class="pt-6">
+                    <a href="Vlaue Assignment of Primary Ag-soln.html" class="brand-blue brand-blue-hover text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all text-sm tracking-wide h-12">
+                        進入系統網頁 ➔
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md hover:border-slate-300/80 transition-all duration-200">
+                <div class="space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm">🧪</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 tracking-wide leading-snug">工作液需求體積估算</h3>
+                        <p class="text-xs text-slate-400 font-medium mt-1 leading-normal">
+                            Volume Calculation & Estimation for<br>Working Solution
+                        </p>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed pt-1">
+                        依據生產批量與預期分裝瓶數，自動代入精準損耗係數，快速推算校正液與品管液之基礎與實際配置體積。
+                    </p>
+                </div>
+                <div class="pt-6">
+                    <a href="Volume Calculation.html" class="brand-blue brand-blue-hover text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all text-sm tracking-wide h-12">
+                        進入系統網頁 ➔
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md hover:border-slate-300/80 transition-all duration-200">
+                <div class="space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl shadow-sm">🚨</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 tracking-wide leading-snug">工作液濃度校正與品管</h3>
+                        <p class="text-xs text-slate-400 font-medium mt-1 leading-normal">
+                            Concentration Adjustment &<br>Quality Control
+                        </p>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed pt-1">
+                        多點批次高敏感防呆判定，提供綠/黃/紅三級燈號預警，於濃度偏離時自動計算二次稀釋添加體積並拋出 OOS 阻斷警報。
+                    </p>
+                </div>
+                <div class="pt-6">
+                    <a href="Concentration Adjusment.html" class="brand-blue brand-blue-hover text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all text-sm tracking-wide h-12">
+                        進入系統網頁 ➔
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-500 text-xs py-5 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+            <p class="font-medium text-slate-400">© 2026 China Medical University Hospital Toxicology Division. All Rights Reserved.</p>
+            <p class="opacity-75">國家級毒物生物化學分析與質量控制專用技術平台 | 標準作業程序連動系統</p>
+        </div>
+    </footer>
+
+</body>
+</html>
