@@ -346,7 +346,7 @@
                         <span class="text-base font-bold code-font" id="massDiffPercent">- %</span>
                     </div>
                     <div class="text-xs text-slate-500 leading-normal">
-                        *依作業程序，配製前後總質量差異率必須維持在 <span class="text-slate-300 font-semibold">±20%</span> 範圍內。
+                        *依作業程序，配製前後總質量差異率必須維持在 <span class="text-slate-300 font-semibold">±25%</span> 範圍內。
                     </div>
                 </div>
             </div>
@@ -688,12 +688,12 @@
             document.getElementById('massAfter').textContent = `${massAfterVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU`;
             document.getElementById('massDiffPercent').textContent = `${diffPercent.toFixed(2)} %`;
 
-            // 6. 最終質量偏離判定界線為 ±20%
+            // 6. 最終質量偏離判定界線為 ±25%
             const verdictBox = document.getElementById('finalVerdictBox');
             const verdictText = document.getElementById('finalVerdictText');
             const massDiffPercentLabel = document.getElementById('massDiffPercent');
 
-            if (Math.abs(diffPercent) <= 20.0) {
+            if (Math.abs(diffPercent) <= 25.0) {
                 verdictBox.className = "p-5 rounded-xl text-center border border-emerald-500/30 bg-emerald-950/40 text-emerald-400";
                 verdictText.textContent = "PASS";
                 massDiffPercentLabel.className = "text-base font-bold code-font text-emerald-400";
