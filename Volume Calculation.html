@@ -27,7 +27,8 @@
         </a>
 
     </div>
-</header>
+    </header>
+
     <main class="max-w-7xl mx-auto px-4 pb-12">
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-2 bg-slate-200 rounded-xl shadow-inner">
@@ -137,10 +138,10 @@
     <script>
         let currentTab = 'cal';
 
-        // 監聽鍵盤 Enter 鍵
+        // 監聽整個輸入區塊的鍵盤事件，按 Enter 鍵直接觸發計算
         document.getElementById('input-container').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
-                event.preventDefault();
+                event.preventDefault(); // 防止可能的表單預設行為
                 executeCalculation();
             }
         });
@@ -158,24 +159,16 @@
             currentTab = tab;
             const btnCal = document.getElementById('tab-cal');
             const btnQc = document.getElementById('tab-qc');
+            const isSync = document.getElementById('sync-ca-flag').checked;
             
             if(tab === 'cal') {
                 btnCal.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 tab-active";
                 btnQc.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
                 document.getElementById('sync-checkbox-wrapper').classList.remove('hidden');
-                resetResultBox();
             } else {
                 btnQc.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 tab-active";
                 btnCal.className = "py-3.5 text-center text-base font-bold rounded-lg transition-all duration-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
-                document.getElementById('sync-checkbox-wrapper').classList.add('hidden');
-                
-                const isSync = document.getElementById('sync-ca-flag').checked;
-                const qcCa = document.getElementById('input-ca-qc').value;
-                if (isSync && qcCa) {
-                    executeCalculation();
-                } else {
-                    resetResultBox();
-                }
+                document.getElementById('sync-checkbox-wrapper').classList.add('hidden'); // 品管液分頁隱藏勾選框
             }
 
             document.getElementById('input-title').innerText = tab === 'cal' ? '校正液生產參數輸入' : '品管液生產參數輸入';
@@ -183,6 +176,14 @@
             document.getElementById('input-ca-qc').classList.toggle('hidden', tab !== 'qc');
             document.getElementById('batch-group-cal').classList.toggle('hidden', tab !== 'cal');
             document.getElementById('batch-group-qc').classList.toggle('hidden', tab !== 'qc');
+            
+            // 關鍵修改：若開啟同步帶入且已有濃度數值，切換分頁時直接執行計算，不重置字卡
+            const currentCa = parseFloat(document.getElementById(tab === 'cal' ? 'input-ca-cal' : 'input-ca-qc').value);
+            if (isSync && !isNaN(currentCa) && currentCa > 0) {
+                executeCalculation();
+            } else {
+                resetResultBox();
+            }
         }
 
         function clearToDefaults() {
@@ -214,26 +215,8 @@
             return (Math.round(num * 1000) / 1000).toFixed(3);
         }
 
-        // 字卡生成器：原基準體積修正為「淺灰色、細體、無刪除線」；增量標籤修正為「[建議配製增量0.12%: ...]」
-        function buildCardHtml(title, subTitle, conc, sourceText, sourceVol, diluentVol, totalVol, overfillConfig = null, customRemark = "") {
-            let leftColumnContent = `
-                <div class="text-[18px] font-bold text-green-600">${sourceVol}</div>
-                <div class="text-[14px] font-normal text-green-600 mt-0.5">${sourceText}</div>
-            `;
-
-            if (overfillConfig) {
-                const overfillVol = overfillConfig.volume;
-                const finalActual = overfillConfig.actualTotal;
-                leftColumnContent = `
-                    <div class="text-[14px] font-normal text-slate-400 opacity-80">基準體積: ${sourceVol}</div>
-                    <div class="text-[14px] font-normal text-green-600 mt-0.5">${sourceText}</div>
-                    <div class="text-[14px] font-semibold text-orange-600 mt-1">[建議配製增量0.12%: +${overfillVol}]</div>
-                    <div class="text-[14px] font-black text-custom-black mt-2 pt-1 border-t border-dashed border-slate-300">
-                        ➡️ 現場實際抽取: <span class="text-[18px] text-green-600">${finalActual}</span>
-                    </div>
-                `;
-            }
-
+        // 統一建立字卡：所有字體大小與規格依指示全面 +2 (16px -> 18px / 12px -> 14px)
+        function buildCardHtml(title, subTitle, conc, sourceText, sourceVol, diluentVol, totalVol, customRemark = "") {
             return `
                 <div class="bg-white p-5 rounded-xl shadow-sm border-2 border-slate-200 space-y-3 text-left">
                     <div>
@@ -252,12 +235,12 @@
                             </thead>
                             <tbody>
                                 <tr class="border-b border-slate-300">
-                                    <td class="py-4 px-4 border-r border-slate-300 bg-white valign-top">
-                                        ${leftColumnContent}
+                                    <td class="py-4 px-4 border-r border-slate-300 bg-white">
+                                        <div class="text-[18px] font-bold text-green-600">${sourceVol}</div>
+                                        <div class="text-[14px] font-normal text-green-600 mt-0.5">${sourceText}</div>
                                     </td>
-                                    <td class="py-4 px-4 bg-white text-[18px] font-bold text-slate-600">
-                                        <div class="${overfillConfig ? 'mt-6' : ''}">${diluentVol}</div>
-                                        ${overfillConfig ? '<div class="text-[12px] font-normal text-slate-400 mt-1">(保持原體積不扣除)</div>' : ''}
+                                    <td class="py-4 px-4 bg-white text-[18px] font-bold text-slate-600 valign-middle">
+                                        <div class="leading-[2.5]">${diluentVol}</div>
                                     </td>
                                 </tr>
                                 <tr class="bg-slate-100 text-[18px] font-bold text-custom-black">
@@ -301,14 +284,11 @@
                 const awsSource = vAW / factorAW;
                 const awsDiluent = vAW - awsSource;
 
-                const c2Overfill = vC2 * 0.0012;
-                const c2BaseSource = vC2 / 100;
-                const c2ActualSource = c2BaseSource + c2Overfill;
-
+                // 校正液製程字卡順序：C1 -> AWS -> C3 -> C2
                 const remarkC1 = `<div class="text-xs font-bold text-red-600 px-1">🛑 備註：直接由抗原稀釋液分裝，不添加抗原</div>`;
                 cardsHtml += buildCardHtml(
                     "校正液C1工作液", "(CWS-1)", "預期目標濃度: < 1.0 mIU/mL",
-                    "(不需加入抗原)", "0.000", round3(vC1), round3(vC1), null, remarkC1
+                    "(不需加入抗原)", "0.000", round3(vC1), round3(vC1), remarkC1
                 );
 
                 cardsHtml += buildCardHtml(
@@ -323,8 +303,7 @@
 
                 cardsHtml += buildCardHtml(
                     "校正液C2工作液", "(CWS-2)", "預期目標濃度: 55.0 mIU/mL",
-                    "(取用校正液C3工作液(CWS-3))", round3(c2BaseSource), round3(vC2 - c2BaseSource), round3(vC2),
-                    { volume: round3(c2Overfill), actualTotal: round3(c2ActualSource) }
+                    "(取用校正液C3工作液(CWS-3))", round3(vC2 / 100), round3(vC2 - (vC2 / 100)), round3(vC2)
                 );
 
             } else {
@@ -338,24 +317,24 @@
                 const awsQCSource = vAW_QC / factorAW;
                 const awsQCDiluent = vAW_QC - awsQCSource;
 
-                const clOverfill = vCL * 0.0012;
-                const clBaseSource = vCL / 100;
-                const clActualSource = clBaseSource + clOverfill;
-
+                // 品管液製程字卡順序：AWS (最上方) -> QWS-CH (中間) -> QWS-CL (最下方)
+                
+                // 1. AWS 字卡
                 cardsHtml += buildCardHtml(
                     "抗原工作液", "(AWS)", "預期目標濃度: 550.0 IU/mL",
                     "(取用抗原母液)", round3(awsQCSource), round3(awsQCDiluent), round3(vAW_QC)
                 );
 
+                // 2. QWS-CH 字卡
                 cardsHtml += buildCardHtml(
                     "高濃度品管液工作液", "(QWS-CH)", "預期目標濃度: 5,500.0 mIU/mL",
                     "(取用抗原工作液(AWS))", round3(vCH / 100), round3(vCH - (vCH / 100)), round3(vCH)
                 );
 
+                // 3. QWS-CL 字卡
                 cardsHtml += buildCardHtml(
                     "低濃度品管液工作液", "(QWS-CL)", "預期目標濃度: 55.0 mIU/mL",
-                    "(取用高濃度品管液工作液(QWS-CH))", round3(clBaseSource), round3(vCL - clBaseSource), round3(vCL),
-                    { volume: round3(clOverfill), actualTotal: round3(clActualSource) }
+                    "(取用高濃度品管液工作液(QWS-CH))", round3(vCL / 100), round3(vCL - (vCL / 100)), round3(vCL)
                 );
             }
 
