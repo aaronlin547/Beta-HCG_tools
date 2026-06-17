@@ -46,7 +46,6 @@
 
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-            <!-- 左側標題 -->
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg brand-blue-light flex items-center justify-center text-lg shrink-0 ring-1 ring-white/10">
                     🧬
@@ -63,7 +62,6 @@
                 </div>
             </div>
 
-            <!-- 右側首頁按鈕 -->
             <a href="index.html"
                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                       bg-white/10 border border-white/30 text-white
@@ -346,7 +344,7 @@
                         <span class="text-base font-bold code-font" id="massDiffPercent">- %</span>
                     </div>
                     <div class="text-xs text-slate-500 leading-normal">
-                        *依作業程序，配製前後總質量差異率必須維持在 <span class="text-slate-300 font-semibold">±25%</span> 範圍內。
+                        *依作業程序，<span class="text-slate-300 font-semibold">抗原總質量差異應介於-25%~+20%內。若有不合格者，應立即暫停該批次之使用。</span>
                     </div>
                 </div>
             </div>
@@ -688,12 +686,12 @@
             document.getElementById('massAfter').textContent = `${massAfterVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU`;
             document.getElementById('massDiffPercent').textContent = `${diffPercent.toFixed(2)} %`;
 
-            // 6. 最終質量偏離判定界線為 ±25%
+            // 6. 最終質量偏離判定界線調整為 -25.0% ~ +20.0%
             const verdictBox = document.getElementById('finalVerdictBox');
             const verdictText = document.getElementById('finalVerdictText');
             const massDiffPercentLabel = document.getElementById('massDiffPercent');
 
-            if (Math.abs(diffPercent) <= 25.0) {
+            if (diffPercent >= -25.0 && diffPercent <= 20.0) {
                 verdictBox.className = "p-5 rounded-xl text-center border border-emerald-500/30 bg-emerald-950/40 text-emerald-400";
                 verdictText.textContent = "PASS";
                 massDiffPercentLabel.className = "text-base font-bold code-font text-emerald-400";
