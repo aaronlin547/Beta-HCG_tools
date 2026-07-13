@@ -45,6 +45,56 @@
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+/* 標題與按鈕的外部包覆容器：負責實現左右對齊 */
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+/* 標題文字區塊 */
+.header-text {
+    text-align: left;
+    flex: 1;
+}
+
+/* 回到主控台首頁的按鈕樣式 */
+.home-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+/* 滑鼠懸停在按鈕上時的變色效果 */
+.home-btn:hover {
+    background: white;
+    color: #1a365d; /* 可替換為你新程式的主色調，例如 var(--primary-color) */
+}
+
+/* RWD 行動裝置響應式設計：當螢幕寬度小於 768px 時，自動變成上下堆疊並滿版 */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .home-btn {
+        width: 100%;
+    }
+}
 
         header h1 {
             font-size: 1.6rem;
@@ -63,6 +113,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
+
 
         .tab-btn {
             flex: 1;
@@ -335,14 +386,22 @@
             background-color: #c53030;
         }
     </style>
-</head>
-<body>
 
 <div class="container">
-    <header>
-        <h1>β-HCG 工作液濃度校正與品管評估系統</h1>
-        <p>提供多點批次自動化防呆判定、濃度合規性檢查及校正體積試算</p>
-    </header>
+   <header>
+    <div class="header-content">
+        <!-- 這裡放你新程式的標題文字 -->
+        <div class="header-text">
+            <h1>β-HCG 工作液濃度校正與品管評估系統</h1>
+            <p>提供多點批次自動化防呆判定、濃度合規性檢查及校正體積試算</p>
+        </div>
+
+        <!-- 這是「回到主控台首頁」的按鈕程式碼，請確保 href 的路徑正確 -->
+        <a href="index.html" class="home-btn">
+            🏠 回到主控台首頁
+        </a>
+    </div>
+</header>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('calibrator')">📊 校正液批次配製 (CWS)</button>
@@ -352,7 +411,7 @@
     <div class="global-settings">
         <div class="form-group">
             <label for="targetVolume">💡 全域待製備體積 (mL)</label>
-            <input type="number" id="targetVolume" class="form-control" value="35" step="any" min="0.001" oninput="syncVolume(this.value)">
+            <input type="number" id="targetVolume" class="form-control" value="30" step="any" min="0.001" oninput="syncVolume(this.value)">
         </div>
         <div style="flex: 1; min-width: 200px; font-size: 0.85rem; color: #4a5568;">
             * 此處設定會同步套用到各項目中。各項目的待製備體積亦可在下方單獨修改。
@@ -371,7 +430,7 @@
             <div class="item-input">
                 <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
                 <input type="number" class="form-control measured-input" data-item="cws1" placeholder="請輸入實測值" step="any" inputmode="decimal">
-                <input type="hidden" class="vol-input" data-item="cws1" value="35">
+                <input type="hidden" class="vol-input" data-item="cws1" value="30">
             </div>
             <div class="inline-result" id="result-cws1"></div>
         </div>
@@ -388,7 +447,7 @@
                 <input type="number" class="form-control measured-input" data-item="cws2" placeholder="請輸入實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="cws2" value="35" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input" data-item="cws2" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws2"></div>
@@ -406,7 +465,7 @@
                 <input type="number" class="form-control measured-input" data-item="cws3" placeholder="請輸入實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="cws3" value="35" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input" data-item="cws3" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws3"></div>
@@ -426,7 +485,7 @@
                 <input type="number" class="form-control measured-input" data-item="qwscl" placeholder="請輸入實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="qwscl" value="63" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input" data-item="qwscl" value="54" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwscl"></div>
@@ -444,7 +503,7 @@
                 <input type="number" class="form-control measured-input" data-item="qwsch" placeholder="請輸入實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="qwsch" value="63" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input" data-item="qwsch" value="54" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwsch"></div>
@@ -475,15 +534,15 @@
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.batch-panel').forEach(panel => panel.classList.remove('active'));
         
-        let defaultVolume = 35; // 預設為校正液 35 mL
+        let defaultVolume = 30; // 預設為校正液 30 mL
         if(mode === 'calibrator') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             document.getElementById('panel-calibrator').classList.add('active');
-            defaultVolume = 35; // 💡 需求 1 & 2：校正液全面切換為 35
+            defaultVolume = 30; // 💡 需求 1 & 2：校正液全面切換為 30
         } else {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.getElementById('panel-qc').classList.add('active');
-            defaultVolume = 63; // 💡 需求 1 & 2：品管液全面切換為 63
+            defaultVolume = 54; // 💡 需求 1 & 2：品管液全面切換為 54
         }
         
         // 自動更新全域與單項體積
@@ -531,7 +590,7 @@
                 let volEl = document.querySelector(`.vol-input[data-item="${item}"]`);
                 // 體積欄位防呆：如果空白或異常，自動填補為當前組別的預設值
                 if (volEl && (volEl.value.trim() === "" || parseFloat(volEl.value) <= 0)) {
-                    volEl.value = (currentMode === 'calibrator') ? "35" : "63";
+                    volEl.value = (currentMode === 'calibrator') ? "30" : "54";
                 }
             }
 
@@ -563,7 +622,7 @@
                 if (!resultDiv) return;
 
                 let measured = parseFloat(document.querySelector(`.measured-input[data-item="${item}"]`).value);
-                let volume = parseFloat(document.querySelector(`.vol-input[data-item="${item}"]`).value) || (currentMode === 'calibrator' ? 35.0 : 63.0);
+                let volume = parseFloat(document.querySelector(`.vol-input[data-item="${item}"]`).value) || (currentMode === 'calibrator' ? 30.0 : 54.0);
 
                 let status = ""; 
                 let msgTitle = "";

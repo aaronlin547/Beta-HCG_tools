@@ -108,8 +108,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">投料緩衝係數(Total Overage Factor)</label>
-                        <input type="number" id="input-loss" step="0.01" min="1" value="1.4" class="w-full px-3 py-2 border-2 border-green-300 rounded-lg text-sm bg-green-50/10">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">投料緩衝係數(Manufacturing Overage Factor)</label>
+                        <input type="number" id="input-loss" step="0.01" min="1" value="1.2" class="w-full px-3 py-2 border-2 border-green-300 rounded-lg text-sm bg-green-50/10">
                     </div>
                 </div>
 
@@ -187,7 +187,7 @@
             document.getElementById('input-ca-cal').value = "";
             document.getElementById('input-ca-qc').value = "";
             document.getElementById('sync-ca-flag').checked = false;
-            document.getElementById('input-loss').value = "1.4";
+            document.getElementById('input-loss').value = "1.2";
             document.getElementById('batch-c1').value = "25";
             document.getElementById('batch-c2').value = "25";
             document.getElementById('batch-c3').value = "25";
@@ -254,7 +254,7 @@
         }
 
         function executeCalculation() {
-            const loss = parseFloat(document.getElementById('input-loss').value) || 1.4;
+            const loss = parseFloat(document.getElementById('input-loss').value) || 1.2;
             const caInput = document.getElementById(currentTab === 'cal' ? 'input-ca-cal' : 'input-ca-qc');
             const ca = parseFloat(caInput.value) || null;
 
