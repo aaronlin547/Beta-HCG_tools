@@ -674,7 +674,7 @@
                         status = "YELLOW";
                         let v2 = ((measured / target) - 1) * volume;
                         msgTitle = `🟡 觸發調配：濃度偏高稀釋`;
-                        msgDetail = `需額外添加：<strong>抗原稀釋液 (Antigen Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
+                        msgDetail = `需額外添加：<strong>蛋白稀釋液 (Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
                         formulaStr = `V2 = ((${measured} ÷ 55) - 1) × ${volume}`;
                     } else {
                         status = "RED";
@@ -694,13 +694,13 @@
                         status = "YELLOW";
                         let v1 = ((target - measured) * volume) / (spikeAwsConc - target);
                         msgTitle = `🟡 觸發調配：濃度偏低修正`;
-                        msgDetail = `需額外添加：<strong>抗原工作液 (AWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL`;
+                        msgDetail = `需額外添加：<strong>蛋白工作液 (PWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL`;
                         formulaStr = `V1 = (5500 - ${measured}) × ${volume} ÷ (550000 - 5500)`;
                     } else if (measured > 6050 && measured <= 6600) {
                         status = "YELLOW";
                         let v2 = ((measured / target) - 1) * volume;
                         msgTitle = `🟡 觸發調配：濃度偏高稀釋`;
-                        msgDetail = `需額外添加：<strong>抗原稀釋液 (Antigen Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
+                        msgDetail = `需額外添加：<strong>蛋白稀釋液 (Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
                         formulaStr = `V2 = ((${measured} ÷ 5500) - 1) × ${volume}`;
                     } else {
                         status = "RED";
