@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>β-HCG 抗原母液賦值與質量換算機</title>
+    <title>β-HCG 蛋白母液賦值與質量換算機</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -53,7 +53,7 @@
 
                 <div>
                     <h1 class="text-2xl font-bold tracking-wide">
-                        β-HCG 抗原母液賦值與質量換算機
+                        β-HCG 蛋白母液賦值與質量換算機
                     </h1>
 
                     <p class="text-sm text-slate-300 mt-1 font-medium tracking-wide">
@@ -88,15 +88,15 @@
                     </h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">製備前抗原總質量 (M, 單位 IU)</label>
+                            <label class="block text-xs font-bold text-slate-500 tracking-wide mb-1.5">製備前<span class="normal-case">β-HCG</span>蛋白總質量 (M, 單位 IU)</label>
                             <input type="number" id="paramM" value="5000" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">抗原母液稀釋至二級抗原液倍數</label>
+                            <label class="block text-xs font-bold text-slate-500 tracking-wide mb-1.5">蛋白母液稀釋至二級蛋白液倍數</label>
                             <input type="number" id="paramDilution" value="500" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">抗原母液製備總體積 (mL)</label>
+                            <label class="block text-xs font-bold text-slate-500 tracking-wide mb-1.5">蛋白母液製備總體積 (mL)</label>
                             <input type="number" id="paramVolume" value="1.0" step="0.1" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-semibold focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 code-font transition-all">
                         </div>
                     </div>
@@ -110,7 +110,7 @@
                     <div class="space-y-4">
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
                             <div class="flex justify-between items-center mb-2.5">
-                                <span class="text-sm font-bold text-slate-700">β-HCG 低濃度品管液 (mIU/mL)</span>
+                                <span class="text-sm font-bold text-slate-700"><span class="normal-case">β-HCG</span> 低濃度品管液 (mIU/mL)</span>
                                 <span id="qcClBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap">未評估</span>
                             </div>
                             <div class="grid grid-cols-2 gap-3 mb-2.5">
@@ -125,7 +125,7 @@
 
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
                             <div class="flex justify-between items-center mb-2.5">
-                                <span class="text-sm font-bold text-slate-700">β-HCG 高濃度品管液 (mIU/mL)</span>
+                                <span class="text-sm font-bold text-slate-700"><span class="normal-case">β-HCG</span> 高濃度品管液 (mIU/mL)</span>
                                 <span id="qcChBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 whitespace-nowrap">未評估</span>
                             </div>
                             <div class="grid grid-cols-2 gap-3 mb-2.5">
@@ -318,18 +318,18 @@
                         <span class="font-bold text-emerald-400 code-font" id="traceCDi">- mIU/mL</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-400">3. 二級抗原液濃度 (<span class="code-font">CSA = CDi × Di</span>)</span>
-                        <span class="font-bold text-blue-400 code-font" id="traceCSA">- mIU/mL</span>
+                        <span class="text-slate-400">3. 二級蛋白液濃度 (<span class="code-font">CSP = CDi × Di</span>)</span>
+                        <span class="font-bold text-blue-400 code-font" id="traceCSP">- mIU/mL</span>
                     </div>
                     <div class="border-t border-slate-800 pt-3 flex justify-between items-center text-base">
-                        <span class="text-slate-300 font-medium">4. 抗原母液賦值 (<span class="code-font">CA</span>)</span>
-                        <span class="font-black text-amber-400 code-font" id="traceCA">- IU/mL</span>
+                        <span class="text-slate-300 font-medium">4. 蛋白母液賦值 (<span class="code-font">CP</span>)</span>
+                        <span class="font-black text-amber-400 code-font" id="traceCP">- IU/mL</span>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><span>⚖️</span> 抗原總質量比較</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"><span>秤</span> 蛋白總質量比較</h3>
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 text-sm">
                     <div class="flex justify-between">
                         <span class="text-slate-400">製備前總質量 (M)</span>
@@ -344,7 +344,7 @@
                         <span class="text-base font-bold code-font" id="massDiffPercent">- %</span>
                     </div>
                     <div class="text-xs text-slate-500 leading-normal">
-                        *依作業程序，<span class="text-slate-300 font-semibold">抗原總質量差異應介於-30%~+20%內。若有不合格者，應立即暫停該批次之使用。</span>
+                        *依作業程序，<span class="text-slate-300 font-semibold">蛋白總質量差異應介於-30%~+20%內。若有不合格者，應立即暫停該批次之使用。</span>
                     </div>
                 </div>
             </div>
@@ -617,7 +617,7 @@
                 return;
             }
             if (d0Avg >= 1.0) {
-                triggerModal("抗原稀釋液濃度異常，請暫停操作，並釐清異常原因。");
+                triggerModal("蛋白稀釋液濃度異常，請暫停操作，並釐清異常原因。");
                 return;
             }
 
@@ -666,21 +666,21 @@
                 return;
             }
 
-            // 二級抗原液濃度 CSA = CDi * 樣本自訂稀釋倍數
-            const csa = selectedAvg * lowestFactor;
-            // 抗原母液最終實測賦值濃度 CA = CSA * 母液稀釋倍數 / 1000 單位換算
-            const ca = (csa * paramDilution) / 1000;
+            // 二級蛋白液濃度 CSP = CDi * 樣本自訂稀釋倍數
+            const csp = selectedAvg * lowestFactor;
+            // 蛋白母液最終實測賦值濃度 CP = CSP * 母液稀釋倍數 / 1000 單位換算
+            const cp = (csp * paramDilution) / 1000;
 
-            // 質量守恆追溯：製備後實測總質量 M' = CA * 體積
-            const massAfterVal = ca * paramVolume;
+            // 質量守恆追溯：製備後實測總質量 M' = CP * 體積
+            const massAfterVal = cp * paramVolume;
             // 質量偏離率百分比 = (M - M') / M * 100%
             const diffPercent = ((paramM - massAfterVal) / paramM) * 100;
 
             // 5. 輸出整合數據至分析抽屜
             document.getElementById('traceSample').textContent = `${selectedRow} (稀釋 ${lowestFactor} 倍)`;
             document.getElementById('traceCDi').textContent = `${selectedAvg.toFixed(2)} mIU/mL`;
-            document.getElementById('traceCSA').textContent = `${csa.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} mIU/mL`;
-            document.getElementById('traceCA').textContent = `${ca.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU/mL`;
+            document.getElementById('traceCSP').textContent = `${csp.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} mIU/mL`;
+            document.getElementById('traceCP').textContent = `${cp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU/mL`;
             
             document.getElementById('massBefore').textContent = `${paramM.toLocaleString()} IU`;
             document.getElementById('massAfter').textContent = `${massAfterVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} IU`;
