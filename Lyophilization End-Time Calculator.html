@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBC 凍乾製程時間換算系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .brand-blue { background-color: rgb(14, 57, 99); }
+        .brand-blue-light { background-color: rgb(20, 78, 134); }
+        ::selection { background-color: rgb(14, 57, 99); color: white; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-16 text-base">
+
+    <!-- 頂部深藍導覽列 (RGB 14, 57, 99) -->
+    <div class="brand-blue text-white shadow-lg mb-8 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.06] pointer-events-none"
+             style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;">
+        </div>
+        <div class="max-w-7xl mx-auto px-6 py-6 relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl brand-blue-light flex items-center justify-center text-xl shrink-0 ring-1 ring-white/20 shadow-inner">
+                        ❄️
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-wide">
+                            凍乾完成時間計時器
+                        </h1>
+                        <p class="text-xs md:text-sm text-slate-300 mt-0.5 font-medium tracking-wide">
+                            Lyophilization End-Time Calculator
+                        </p>
+                    </div>
+                </div>
+                <a href="index.html"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                          bg-white/10 border border-white/30 text-white
+                          hover:bg-white hover:text-[rgb(14,57,99)]
+                          hover:border-white transition-all duration-150
+                          shadow-sm font-medium text-sm tracking-wide whitespace-nowrap">
+                    🏠 回到主控台首頁
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 space-y-6">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- 左側排程與收料決策區 (5 欄寬) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- 卡片 1：凍乾排程設定 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">📅</span>
+                        凍乾啟動排程設定
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                產品放入時間
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="datetime-local" id="startTimeInput" step="60"
+                                       class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-semibold code-font focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                                <button type="button" id="btnSetNow" 
+                                        class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1 shadow-sm">
+                                    ⚡ 當前
+                                </button>
+                            </div>
+                            <p class="text-xs text-blue-700 font-medium mt-2 flex items-center gap-1.5 bg-blue-50/80 p-2.5 rounded-lg border border-blue-100">
+                                <span>🧪</span>
+                                <span>產品應以液體型態放入冷凍乾燥機棚板中</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 卡片 2：可收料時間換算與排班決策 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-5">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">🎯</span>
+                        可收料時間換算
+                    </h2>
+
+                    <!-- 停止時間 / 可收料時間（黑體字強調） -->
+                    <div class="p-4 rounded-xl bg-slate-950 text-white border border-slate-800 shadow-inner">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                                <span>🏁</span> 標準可收料時間 (凍乾完成)
+                            </span>
+                            <span id="finalDayBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-white/10 text-slate-300">--</span>
+                        </div>
+                        <div id="finalEndTimeDisplay" class="text-xl md:text-2xl font-black text-white code-font tracking-tight mt-1">
+                            請先選取啟動時間
+                        </div>
+                        <div class="text-[11px] text-slate-400 mt-1.5 flex justify-between">
+                            <span>總歷時：<strong id="totalDurationText" class="text-slate-200 code-font">--</strong></span>
+                            <span>狀態：<strong class="text-emerald-400 font-bold">SEG21 停止 / 可收料</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- 預冷結束時間 -->
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                                <span>❄️</span> 預冷結束時間 (轉入加熱程控)
+                            </span>
+                            <span id="precoolDayBadge" class="text-[11px] text-slate-400 code-font">--</span>
+                        </div>
+                        <div id="precoolEndTimeDisplay" class="text-base font-bold text-slate-700 code-font mt-0.5">
+                            --
+                        </div>
+                    </div>
+
+                    <!-- 假日 / 國定假日排班提醒 (遇週末或假日自動觸發) -->
+                    <div id="holidayAlertCard" class="hidden p-4 rounded-xl bg-rose-50 border-2 border-rose-300 animate-in fade-in duration-300">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-base shrink-0 mt-0.5">
+                                ⚠️
+                            </div>
+                            <div class="space-y-1.5 text-xs text-rose-900 w-full">
+                                <div class="font-bold text-sm text-rose-700 flex items-center gap-1.5">
+                                    假日排班提醒！
+                                </div>
+                                <p class="leading-relaxed font-medium">
+                                    標準可收料時間落於 <strong id="holidayReasonText" class="font-extrabold underline text-rose-950">非工作日</strong>。
+                                </p>
+                                <div class="p-3 bg-white/90 rounded-lg border border-rose-200 text-slate-800 space-y-1.5">
+                                    <div class="text-[11px] text-slate-500 font-bold">📌 最晚必須收料時間：</div>
+                                    <div class="text-base font-black text-rose-600 code-font" id="deadlineText">
+                                        YYYY-MM-DD HH:mm (週X)
+                                    </div>
+                                    <div class="text-[11px] text-rose-700 font-semibold pt-1 border-t border-rose-100">
+                                        *因可收料時間遇假日，已自動增加緩衝時間，請務必於時間內完成收料
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 平日正常收料提示 (非假日) -->
+                    <div id="weekdayNormalCard" class="hidden p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2.5 font-medium">
+                        <span class="text-base">✅</span>
+                        <span>完成時間為正常工作日，請依照標準 SOP 於當日完成收料。</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- 右側 SOP 凍乾參數矩陣 (7 欄寬 - 唯讀鎖定) -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-2">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm">🔒</span>
+                            beta-HCG冷凍乾燥參數總覽
+                        </h2>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                            <span>🔒</span> 僅適用於FD24-3S-S棚架封瓶型冷凍乾燥機
+                        </span>
+                    </div>
+
+                    <!-- 預冷階段參數 -->
+                    <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                <span>①</span> 預冷階段 (Pre-cooling)
+                            </h3>
+                            <span class="text-xs font-bold text-blue-600 code-font">歷時 270 分鐘 (4.5 hr)</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-xs">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <span class="text-slate-400 block text-[10px]">目標溫度 (SV)</span>
+                                <span class="font-bold text-slate-800 code-font text-sm">-40.0 °C</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <span class="text-slate-400 block text-[10px]">維持時間 (TM)</span>
+                                <span class="font-bold text-slate-800 code-font text-sm">270 min</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <span class="text-slate-400 block text-[10px]">真空設定 (HVAC)</span>
+                                <span class="font-bold text-slate-800 code-font text-sm">ATM (常壓)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 程控步驟表格 (SEG01 ~ SEG21) -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                <span>②</span> 加熱程控各階段參數 (SEG01 ~ SEG21)
+                            </h3>
+                            <span class="text-[11px] text-slate-500 font-semibold code-font">HVAC: 0.180 torr | VAC: 0.000</span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-slate-200">
+                            <table class="w-full text-left text-xs border-collapse table-fixed">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                                        <th class="py-2.5 px-3 w-[16%]">段別</th>
+                                        <th class="py-2.5 px-3 w-[24%]">屬性</th>
+                                        <th class="py-2.5 px-3 text-center w-[16%]">目標溫度(SP)</th>
+                                        <th class="py-2.5 px-3 text-center w-[16%]">時長(TM)</th>
+                                        <th class="py-2.5 px-3 text-right w-[28%]">程控時長累計</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sopTableBody" class="divide-y divide-slate-100 font-medium text-slate-700 bg-white">
+                                    <!-- 由 JavaScript 渲染受控數值 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 雙週末收料品質管控警示彈窗 (Modal) -->
+    <div id="weekendAlertModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border-t-4 border-amber-500 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-start gap-4">
+                <div class="bg-amber-100 text-amber-600 w-12 h-12 rounded-full shrink-0 text-xl flex items-center justify-center font-bold shadow-inner">
+                    ⚠️
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">製程排程品質提醒</h3>
+                    <p class="text-sm text-slate-700 mt-2 leading-relaxed font-semibold">
+                        標準可收料時間與最晚必須收料時間都落在週末時間，考量品質管控，建議重新評估冷凍乾燥啟動時間。
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="btnCloseModal" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-md">
+                    確認並已知悉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRECOOL_MINUTES = 270;
+
+        const SOP_SEGMENTS = [
+            { seg: "SEG 01", temp: -40.0, min: 1,   type: "起始段 (恆溫)" },
+            { seg: "SEG 02", temp: -40.0, min: 120, type: "恆溫段" },
+            { seg: "SEG 03", temp: -30.0, min: 30,  type: "升溫段" },
+            { seg: "SEG 04", temp: -30.0, min: 270, type: "恆溫段" },
+            { seg: "SEG 05", temp: -25.0, min: 30,  type: "升溫段" },
+            { seg: "SEG 06", temp: -25.0, min: 270, type: "恆溫段" },
+            { seg: "SEG 07", temp: -20.0, min: 30,  type: "升溫段" },
+            { seg: "SEG 08", temp: -20.0, min: 270, type: "恆溫段" },
+            { seg: "SEG 09", temp: -15.0, min: 30,  type: "升溫段" },
+            { seg: "SEG 10", temp: -15.0, min: 210, type: "恆溫段" },
+            { seg: "SEG 11", temp: -5.0,  min: 30,  type: "升溫段" },
+            { seg: "SEG 12", temp: -5.0,  min: 150, type: "恆溫段" },
+            { seg: "SEG 13", temp: 0.0,   min: 30,  type: "升溫段" },
+            { seg: "SEG 14", temp: 0.0,   min: 120, type: "恆溫段" },
+            { seg: "SEG 15", temp: 10.0,  min: 30,  type: "升溫段" },
+            { seg: "SEG 16", temp: 10.0,  min: 120, type: "恆溫段" },
+            { seg: "SEG 17", temp: 20.0,  min: 30,  type: "升溫段" },
+            { seg: "SEG 18", temp: 20.0,  min: 120, type: "恆溫段" },
+            { seg: "SEG 19", temp: 25.0,  min: 30,  type: "升溫段" },
+            { seg: "SEG 20", temp: 25.0,  min: 180, type: "恆溫段 (完成)" },
+            { seg: "SEG 21", temp: 25.0,  min: 0,   type: "終止段 (Hold)", isStop: true }
+        ];
+
+        const TAIWAN_HOLIDAYS = {
+            "2026-01-01": "元旦",
+            "2026-02-16": "農曆除夕前一日",
+            "2026-02-17": "農曆除夕",
+            "2026-02-18": "春節初一",
+            "2026-02-19": "春節初二",
+            "2026-02-20": "春節初三",
+            "2026-02-28": "和平紀念日",
+            "2026-04-03": "兒童節補假",
+            "2026-04-04": "兒童節/清明節",
+            "2026-04-05": "清明節",
+            "2026-04-06": "清明節補假",
+            "2026-05-01": "勞動節",
+            "2026-06-19": "端午節",
+            "2026-09-25": "中秋節",
+            "2026-10-10": "國慶日",
+            "2027-01-01": "元旦",
+            "2027-02-05": "農曆除夕",
+            "2027-02-06": "春節初一",
+            "2027-02-07": "春節初二",
+            "2027-02-08": "春節初三",
+            "2027-02-28": "和平紀念日",
+            "2027-04-05": "清明節",
+            "2027-05-01": "勞動節",
+            "2027-06-09": "端午節",
+            "2027-09-15": "中秋節",
+            "2027-10-10": "國慶日"
+        };
+
+        const startTimeInput = document.getElementById('startTimeInput');
+        const btnSetNow = document.getElementById('btnSetNow');
+        const finalEndTimeDisplay = document.getElementById('finalEndTimeDisplay');
+        const finalDayBadge = document.getElementById('finalDayBadge');
+        const precoolEndTimeDisplay = document.getElementById('precoolEndTimeDisplay');
+        const precoolDayBadge = document.getElementById('precoolDayBadge');
+        const totalDurationText = document.getElementById('totalDurationText');
+        const holidayAlertCard = document.getElementById('holidayAlertCard');
+        const weekdayNormalCard = document.getElementById('weekdayNormalCard');
+        const holidayReasonText = document.getElementById('holidayReasonText');
+        const deadlineText = document.getElementById('deadlineText');
+        const sopTableBody = document.getElementById('sopTableBody');
+        const weekendAlertModal = document.getElementById('weekendAlertModal');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+
+        btnCloseModal.addEventListener('click', () => {
+            weekendAlertModal.classList.add('hidden');
+        });
+
+        function renderSopTable() {
+            let runningMins = 0;
+            let html = '';
+
+            SOP_SEGMENTS.forEach((s) => {
+                runningMins += s.min;
+                const isStop = s.isStop;
+                let rowClass = "hover:bg-slate-50 transition-colors";
+
+                if (isStop) {
+                    rowClass = "bg-slate-900 text-white font-extrabold";
+                }
+
+                const tempText = `${s.temp > 0 ? '+' : ''}${s.temp.toFixed(1)} °C`;
+                const timeCell = isStop ? `<span class="text-rose-400 font-bold">-1 (Hold)</span>` : `${s.min} 分`;
+                
+                // 程控累計改以「分」表示，最後一階段 SEG21 加上「約 35.0 hr」
+                const cumCell = isStop 
+                    ? `<span class="text-emerald-300 font-bold">2101 分 <span class="text-[11px] text-slate-300 font-normal">(約 35.0 hr)</span></span>` 
+                    : `${runningMins} 分`;
+
+                html += `
+                    <tr class="${rowClass}">
+                        <td class="py-2.5 px-3 font-bold code-font ${isStop ? 'text-amber-300' : 'text-slate-800'}">${s.seg}</td>
+                        <td class="py-2.5 px-3 truncate">${s.type}</td>
+                        <td class="py-2.5 px-3 text-center code-font ${isStop ? 'text-white' : ''}">${tempText}</td>
+                        <td class="py-2.5 px-3 text-center code-font">${timeCell}</td>
+                        <td class="py-2.5 px-3 text-right code-font font-bold">${cumCell}</td>
+                    </tr>
+                `;
+            });
+            sopTableBody.innerHTML = html;
+        }
+
+        function checkHoliday(dateObj) {
+            const dayOfWeek = dateObj.getDay();
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            if (TAIWAN_HOLIDAYS[dateStr]) {
+                return { isHoliday: true, isWeekend: (dayOfWeek === 0 || dayOfWeek === 6), reason: `國定假日 (${TAIWAN_HOLIDAYS[dateStr]})` };
+            }
+            if (dayOfWeek === 0) {
+                return { isHoliday: true, isWeekend: true, reason: "週日例假日" };
+            }
+            if (dayOfWeek === 6) {
+                return { isHoliday: true, isWeekend: true, reason: "週六例假日" };
+            }
+            return { isHoliday: false, isWeekend: false, reason: "正常工作日" };
+        }
+
+        function format24HourDateTime(d) {
+            const weekdays = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const w = weekdays[d.getDay()];
+            return {
+                fullStr: `${y}-${m}-${day} ${hh}:${mm}`,
+                dayBadge: `${w}`,
+                dateOnly: `${y}-${m}-${day}`
+            };
+        }
+
+        function calculateSchedule() {
+            const rawVal = startTimeInput.value;
+            if (!rawVal) return;
+
+            const startTime = new Date(rawVal);
+            if (isNaN(startTime.getTime())) return;
+
+            // 1. 預冷結束時間 (270 分鐘)
+            const precoolEnd = new Date(startTime.getTime() + PRECOOL_MINUTES * 60 * 1000);
+            const precoolFmt = format24HourDateTime(precoolEnd);
+            precoolEndTimeDisplay.textContent = `${precoolFmt.fullStr} (${precoolFmt.dayBadge})`;
+            precoolDayBadge.textContent = `歷時 4.5 hr`;
+
+            // 2. 總歷時與標準可收料時間 (預冷 270m + 程控 2101m = 2371m / 39.516 hr)
+            const totalMins = 270 + 2101;
+            const finalEnd = new Date(startTime.getTime() + totalMins * 60 * 1000);
+            const finalFmt = format24HourDateTime(finalEnd);
+
+            finalEndTimeDisplay.textContent = `${finalFmt.fullStr} (${finalFmt.dayBadge})`;
+            finalDayBadge.textContent = `製程停止 / 可收料`;
+            totalDurationText.textContent = `39 小時 31 分鐘 (${totalMins} 分鐘)`;
+
+            // 最晚收料時間 = 完成時間 + 30 小時
+            const deadlineDate = new Date(finalEnd.getTime() + 30 * 60 * 60 * 1000);
+            const deadlineFmt = format24HourDateTime(deadlineDate);
+
+            // 3. 假日收料判定
+            const holidayStatus = checkHoliday(finalEnd);
+            const deadlineHolidayStatus = checkHoliday(deadlineDate);
+
+            if (holidayStatus.isHoliday) {
+                holidayAlertCard.classList.remove('hidden');
+                weekdayNormalCard.classList.add('hidden');
+                holidayReasonText.textContent = `${holidayStatus.reason} (${finalFmt.dayBadge})`;
+                deadlineText.textContent = `${deadlineFmt.fullStr} (${deadlineFmt.dayBadge})`;
+            } else {
+                holidayAlertCard.classList.add('hidden');
+                weekdayNormalCard.classList.remove('hidden');
+            }
+
+            // 4. 防呆彈窗：若「標準可收料時間」與「最晚必須收料時間」都落在週末 (週六/週日)
+            if (holidayStatus.isWeekend && deadlineHolidayStatus.isWeekend) {
+                weekendAlertModal.classList.remove('hidden');
+            } else {
+                weekendAlertModal.classList.add('hidden');
+            }
+        }
+
+        function setNowTime() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            startTimeInput.value = `${y}-${m}-${d}T${hh}:${mm}`;
+            calculateSchedule();
+        }
+
+        btnSetNow.addEventListener('click', setNowTime);
+        startTimeInput.addEventListener('change', calculateSchedule);
+        startTimeInput.addEventListener('input', calculateSchedule);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSopTable();
+            setNowTime();
+        });
+    </script>
+</body>
+</html>
