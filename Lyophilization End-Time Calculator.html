@@ -202,19 +202,20 @@
                             <span class="text-[11px] text-slate-500 font-semibold code-font">HVAC: 0.180 torr | VAC: 0.000</span>
                         </div>
 
-                        <div class="overflow-hidden rounded-xl border border-slate-200">
-                            <table class="w-full text-left text-xs border-collapse table-fixed">
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left text-xs border-collapse table-fixed min-w-[620px]">
                                 <thead>
                                     <tr class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
-                                        <th class="py-2.5 px-3 w-[16%]">段別</th>
-                                        <th class="py-2.5 px-3 w-[24%]">屬性</th>
-                                        <th class="py-2.5 px-3 text-center w-[16%]">目標溫度(SP)</th>
-                                        <th class="py-2.5 px-3 text-center w-[16%]">時長(TM)</th>
-                                        <th class="py-2.5 px-3 text-right w-[28%]">程控時長累計</th>
+                                        <th class="py-2.5 px-2.5 w-[13%]">段別</th>
+                                        <th class="py-2.5 px-2.5 w-[19%]">屬性</th>
+                                        <th class="py-2.5 px-2 text-center w-[13%]">目標溫度(SP)</th>
+                                        <th class="py-2.5 px-2 text-center w-[23%] text-blue-700 bg-blue-50/60 font-black">時間預估</th>
+                                        <th class="py-2.5 px-2 text-center w-[12%]">時長(TM)</th>
+                                        <th class="py-2.5 px-2.5 text-right w-[20%]">程控時長累計</th>
                                     </tr>
                                 </thead>
                                 <tbody id="sopTableBody" class="divide-y divide-slate-100 font-medium text-slate-700 bg-white">
-                                    <!-- 由 JavaScript 渲染受控數值 -->
+                                    <!-- 由 JavaScript 渲染受控數值與各段時間預估 -->
                                 </tbody>
                             </table>
                         </div>
@@ -324,7 +325,16 @@
             weekendAlertModal.classList.add('hidden');
         });
 
-        function renderSopTable() {
+        function formatEstDateTime(d) {
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            const day = d.getDate();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            return `${y}/${m}/${day} ${hh}:${mm}`;
+        }
+
+        function renderSopTable(baseStartTime) {
             let runningMins = 0;
             let html = '';
 
@@ -340,18 +350,25 @@
                 const tempText = `${s.temp > 0 ? '+' : ''}${s.temp.toFixed(1)} °C`;
                 const timeCell = isStop ? `<span class="text-rose-400 font-bold">-1 (Hold)</span>` : `${s.min} 分`;
                 
-                // 程控累計改以「分」表示，最後一階段 SEG21 加上「約 35.0 hr」
                 const cumCell = isStop 
                     ? `<span class="text-emerald-300 font-bold">2101 分 <span class="text-[11px] text-slate-300 font-normal">(約 35.0 hr)</span></span>` 
                     : `${runningMins} 分`;
 
+                // 計算時間預估 (起算時間 + 預冷270分 + 該段累計程控時間)
+                let estTimeCell = '--';
+                if (baseStartTime && !isNaN(baseStartTime.getTime())) {
+                    const stepEndDate = new Date(baseStartTime.getTime() + (PRECOOL_MINUTES + runningMins) * 60 * 1000);
+                    estTimeCell = formatEstDateTime(stepEndDate);
+                }
+
                 html += `
                     <tr class="${rowClass}">
-                        <td class="py-2.5 px-3 font-bold code-font ${isStop ? 'text-amber-300' : 'text-slate-800'}">${s.seg}</td>
-                        <td class="py-2.5 px-3 truncate">${s.type}</td>
-                        <td class="py-2.5 px-3 text-center code-font ${isStop ? 'text-white' : ''}">${tempText}</td>
-                        <td class="py-2.5 px-3 text-center code-font">${timeCell}</td>
-                        <td class="py-2.5 px-3 text-right code-font font-bold">${cumCell}</td>
+                        <td class="py-2.5 px-2.5 font-bold code-font ${isStop ? 'text-amber-300' : 'text-slate-800'}">${s.seg}</td>
+                        <td class="py-2.5 px-2.5 truncate">${s.type}</td>
+                        <td class="py-2.5 px-2 text-center code-font ${isStop ? 'text-white' : ''}">${tempText}</td>
+                        <td class="py-2.5 px-2 text-center code-font font-semibold ${isStop ? 'text-amber-300' : 'text-blue-700 bg-blue-50/30'}">${estTimeCell}</td>
+                        <td class="py-2.5 px-2 text-center code-font">${timeCell}</td>
+                        <td class="py-2.5 px-2.5 text-right code-font font-bold">${cumCell}</td>
                     </tr>
                 `;
             });
@@ -394,10 +411,16 @@
 
         function calculateSchedule() {
             const rawVal = startTimeInput.value;
-            if (!rawVal) return;
+            if (!rawVal) {
+                renderSopTable(null);
+                return;
+            }
 
             const startTime = new Date(rawVal);
-            if (isNaN(startTime.getTime())) return;
+            if (isNaN(startTime.getTime())) {
+                renderSopTable(null);
+                return;
+            }
 
             // 1. 預冷結束時間 (270 分鐘)
             const precoolEnd = new Date(startTime.getTime() + PRECOOL_MINUTES * 60 * 1000);
@@ -438,6 +461,9 @@
             } else {
                 weekendAlertModal.classList.add('hidden');
             }
+
+            // 5. 連動更新程控表格各段「時間預估」
+            renderSopTable(startTime);
         }
 
         function setNowTime() {
@@ -456,7 +482,6 @@
         startTimeInput.addEventListener('input', calculateSchedule);
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderSopTable();
             setNowTime();
         });
     </script>
