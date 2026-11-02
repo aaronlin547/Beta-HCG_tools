@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>β-HCG 工作液濃度校正與品管評估系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #1a365d;
@@ -21,7 +22,11 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
         }
 
         body {
@@ -45,56 +50,6 @@
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-/* 標題與按鈕的外部包覆容器：負責實現左右對齊 */
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-}
-
-/* 標題文字區塊 */
-.header-text {
-    text-align: left;
-    flex: 1;
-}
-
-/* 回到主控台首頁的按鈕樣式 */
-.home-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-/* 滑鼠懸停在按鈕上時的變色效果 */
-.home-btn:hover {
-    background: white;
-    color: #1a365d; /* 可替換為你新程式的主色調，例如 var(--primary-color) */
-}
-
-/* RWD 行動裝置響應式設計：當螢幕寬度小於 768px 時，自動變成上下堆疊並滿版 */
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
-
-    .home-btn {
-        width: 100%;
-    }
-}
 
         header h1 {
             font-size: 1.6rem;
@@ -106,6 +61,51 @@
             opacity: 0.9;
         }
 
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-text {
+            text-align: left;
+            flex: 1;
+        }
+
+        .home-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .home-btn:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .home-btn {
+                width: 100%;
+            }
+        }
+
         .tabs {
             display: flex;
             background: #edf2f7;
@@ -113,7 +113,6 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-
 
         .tab-btn {
             flex: 1;
@@ -172,6 +171,112 @@
 
         .form-control:focus {
             border-color: var(--secondary-color);
+        }
+
+        /* 批次快速貼入卡片樣式：改為高對比深色底，凸顯內部白底填入區與下拉選單 */
+        .batch-import-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .batch-import-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .batch-import-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .duplicate-selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .duplicate-selector-wrapper label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #cbd5e1;
+        }
+
+        .duplicate-select {
+            padding: 6px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #ffffff;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .duplicate-select:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+        }
+
+        .batch-textarea {
+            width: 100%;
+            height: 72px;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #ffffff;
+            color: #0f172a;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .batch-textarea:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+        }
+
+        .batch-import-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #93c5fd;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-clear-batch {
+            background: transparent;
+            border: none;
+            color: #f87171;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .btn-clear-batch:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
         }
 
         .batch-panel {
@@ -268,7 +373,7 @@
         }
 
         .formula-display {
-            font-family: monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             background: rgba(0,0,0,0.03);
             padding: 4px 6px;
@@ -386,22 +491,21 @@
             background-color: #c53030;
         }
     </style>
+</head>
+<body>
 
 <div class="container">
-   <header>
-    <div class="header-content">
-        <!-- 這裡放你新程式的標題文字 -->
-        <div class="header-text">
-            <h1>β-HCG 工作液濃度校正與品管評估系統</h1>
-            <p>提供多點批次自動化防呆判定、濃度合規性檢查及校正體積試算</p>
+    <header>
+        <div class="header-content">
+            <div class="header-text">
+                <h1><span style="font-family: Symbol;">b</span>-HCG 工作液濃度校正與品管評估系統</h1>
+                <p>提供多點批次自動化防呆判定、濃度合規性檢查及校正體積試算</p>
+            </div>
+            <a href="index.html" class="home-btn">
+                🏠 回到主控台首頁
+            </a>
         </div>
-
-        <!-- 這是「回到主控台首頁」的按鈕程式碼，請確保 href 的路徑正確 -->
-        <a href="index.html" class="home-btn">
-            🏠 回到主控台首頁
-        </a>
-    </div>
-</header>
+    </header>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('calibrator')">📊 校正液批次配製 (CWS)</button>
@@ -411,16 +515,39 @@
     <div class="global-settings">
         <div class="form-group">
             <label for="targetVolume">💡 全域待製備體積 (mL)</label>
-            <input type="number" id="targetVolume" class="form-control" value="30" step="any" min="0.001" oninput="syncVolume(this.value)">
+            <input type="number" id="targetVolume" class="form-control code-font" value="30" step="any" min="0.001" oninput="syncVolume(this.value)">
         </div>
         <div style="flex: 1; min-width: 200px; font-size: 0.85rem; color: #4a5568;">
             * 此處設定會同步套用到各項目中。各項目的待製備體積亦可在下方單獨修改。
         </div>
     </div>
 
-    <p style="font-size:0.85rem; color:#718096; margin-bottom:10px; text-align:right;">* 請依序填入實測濃度，再點擊最下方按鈕執行分析</p>
-
+    <!-- 校正液分頁 (CWS) -->
     <div id="panel-calibrator" class="batch-panel active">
+        <!-- 數據批次高速貼入區 (深色底凸顯卡片) -->
+        <div class="batch-import-card">
+            <div class="batch-import-header">
+                <div class="batch-import-title">
+                    <span>⌨️</span> 數據批次高速貼入區 (校正液)
+                </div>
+                <div class="duplicate-selector-wrapper">
+                    <label for="dup-select-cal">每組重複數(Duplicates)：</label>
+                    <select id="dup-select-cal" class="duplicate-select code-font" onchange="parseBatchData('cal')">
+                        <option value="2">2重複分組</option>
+                        <option value="3" selected>3重複分組</option>
+                        <option value="4">4重複分組</option>
+                    </select>
+                </div>
+            </div>
+            <textarea id="batch-input-cal" class="batch-textarea" placeholder="請直接貼入連續測值（支援 Excel 複製、逗號、空格或換行，例：0.2, 0.3, 0.1, 52.1, 53.4, 54.0, 5420.5, 5480.0, 5510.2 ...）" oninput="parseBatchData('cal')"></textarea>
+            <div class="batch-import-footer">
+                <span id="batch-status-cal" class="code-font">已辨識 0 筆測值 ｜ 依「3重複分組」自動填入 CWS-1、CWS-2、CWS-3 平均實測值</span>
+                <button type="button" class="btn-clear-batch" onclick="clearBatchInput('cal')">🧼 清除批次數據</button>
+            </div>
+        </div>
+
+        <p style="font-size:0.85rem; color:#718096; margin-bottom:10px; text-align:right;">* 請確認平均實測濃度已填妥，再點擊最下方按鈕執行分析</p>
+
         <div class="item-row" id="row-cws1">
             <div class="item-info">
                 <h3>CWS-1</h3>
@@ -428,9 +555,9 @@
                 <p>綠燈規格: &lt; 1.0</p>
             </div>
             <div class="item-input">
-                <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
-                <input type="number" class="form-control measured-input" data-item="cws1" placeholder="請輸入實測值" step="any" inputmode="decimal">
-                <input type="hidden" class="vol-input" data-item="cws1" value="30">
+                <label style="font-size:0.85rem; font-weight:bold;">平均實測濃度 (mIU/mL)</label>
+                <input type="number" class="form-control measured-input code-font" data-item="cws1" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
+                <input type="hidden" class="vol-input code-font" data-item="cws1" value="30">
             </div>
             <div class="inline-result" id="result-cws1"></div>
         </div>
@@ -440,14 +567,14 @@
                 <h3>CWS-2</h3>
                 <p>目標濃度: 55 mIU/mL</p>
                 <p>綠燈規格: 49.5 ~ 60.5</p>
-                <p>可校正區: 44.0 ~ 66.0</p>
+                <p>可校正區: 44.0 ~ 66.0 (CWS-3合規時解除上限)</p>
             </div>
             <div class="item-input">
-                <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
-                <input type="number" class="form-control measured-input" data-item="cws2" placeholder="請輸入實測值" step="any" inputmode="decimal">
+                <label style="font-size:0.85rem; font-weight:bold;">平均實測濃度 (mIU/mL)</label>
+                <input type="number" class="form-control measured-input code-font" data-item="cws2" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="cws2" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="cws2" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws2"></div>
@@ -458,34 +585,59 @@
                 <h3>CWS-3</h3>
                 <p>目標濃度: 5500 mIU/mL</p>
                 <p>綠燈規格: 4950 ~ 6050</p>
-                <p>可校正區: 4400 ~ 6600</p>
+                <p>可校正區: 4400 ~ 6600 (優先判定)</p>
             </div>
             <div class="item-input">
-                <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
-                <input type="number" class="form-control measured-input" data-item="cws3" placeholder="請輸入實測值" step="any" inputmode="decimal">
+                <label style="font-size:0.85rem; font-weight:bold;">平均實測濃度 (mIU/mL)</label>
+                <input type="number" class="form-control measured-input code-font" data-item="cws3" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="cws3" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="cws3" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws3"></div>
         </div>
     </div>
 
+    <!-- 品管液分頁 (QWS) -->
     <div id="panel-qc" class="batch-panel">
+        <!-- 數據批次高速貼入區 (深色底凸顯卡片) -->
+        <div class="batch-import-card">
+            <div class="batch-import-header">
+                <div class="batch-import-title">
+                    <span>⌨️</span> 數據批次高速貼入區 (品管液)
+                </div>
+                <div class="duplicate-selector-wrapper">
+                    <label for="dup-select-qc">每組重複數(Duplicates)：</label>
+                    <select id="dup-select-qc" class="duplicate-select code-font" onchange="parseBatchData('qc')">
+                        <option value="2">2重複分組</option>
+                        <option value="3" selected>3重複分組</option>
+                        <option value="4">4重複分組</option>
+                    </select>
+                </div>
+            </div>
+            <textarea id="batch-input-qc" class="batch-textarea" placeholder="請直接貼入連續測值（支援 Excel 複製、逗號、空格或換行，例：52.1, 53.4, 54.0, 5420.5, 5480.0, 5510.2 ...）" oninput="parseBatchData('qc')"></textarea>
+            <div class="batch-import-footer">
+                <span id="batch-status-qc" class="code-font">已辨識 0 筆測值 ｜ 依「3重複分組」自動填入 QWS-CL、QWS-CH 平均實測值</span>
+                <button type="button" class="btn-clear-batch" onclick="clearBatchInput('qc')">🧼 清除批次數據</button>
+            </div>
+        </div>
+
+        <p style="font-size:0.85rem; color:#718096; margin-bottom:10px; text-align:right;">* 請確認平均實測濃度已填妥，再點擊最下方按鈕執行分析</p>
+
         <div class="item-row" id="row-qwscl">
             <div class="item-info">
                 <h3>QWS-CL</h3>
                 <p>目標濃度: 55 mIU/mL</p>
                 <p>綠燈規格: 49.5 ~ 60.5</p>
-                <p>可校正區: 44.0 ~ 66.0</p>
+                <p>可校正區: 44.0 ~ 66.0 (QWS-CH合規時解除上限)</p>
             </div>
             <div class="item-input">
-                <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
-                <input type="number" class="form-control measured-input" data-item="qwscl" placeholder="請輸入實測值" step="any" inputmode="decimal">
+                <label style="font-size:0.85rem; font-weight:bold;">平均實測濃度 (mIU/mL)</label>
+                <input type="number" class="form-control measured-input code-font" data-item="qwscl" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="qwscl" value="54" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="qwscl" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwscl"></div>
@@ -496,14 +648,14 @@
                 <h3>QWS-CH</h3>
                 <p>目標濃度: 5500 mIU/mL</p>
                 <p>綠燈規格: 4950 ~ 6050</p>
-                <p>可校正區: 4400 ~ 6600</p>
+                <p>可校正區: 4400 ~ 6600 (優先判定)</p>
             </div>
             <div class="item-input">
-                <label style="font-size:0.85rem; font-weight:bold;">實測濃度 (mIU/mL)</label>
-                <input type="number" class="form-control measured-input" data-item="qwsch" placeholder="請輸入實測值" step="any" inputmode="decimal">
+                <label style="font-size:0.85rem; font-weight:bold;">平均實測濃度 (mIU/mL)</label>
+                <input type="number" class="form-control measured-input code-font" data-item="qwsch" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input" data-item="qwsch" value="54" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="qwsch" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwsch"></div>
@@ -528,31 +680,23 @@
 <script>
     let currentMode = 'calibrator';
 
-    // 💡 修正點：切換分頁時，自動動態將「全域待製備體積」與「單項體積」切換為各自的專屬預設值
     function switchTab(mode) {
         currentMode = mode;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.batch-panel').forEach(panel => panel.classList.remove('active'));
         
-        let defaultVolume = 30; // 預設為校正液 30 mL
-        if(mode === 'calibrator') {
+        if (mode === 'calibrator') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             document.getElementById('panel-calibrator').classList.add('active');
-            defaultVolume = 30; // 💡 需求 1 & 2：校正液全面切換為 30
         } else {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.getElementById('panel-qc').classList.add('active');
-            defaultVolume = 54; // 💡 需求 1 & 2：品管液全面切換為 54
         }
-        
-        // 自動更新全域與單項體積
-        document.getElementById('targetVolume').value = defaultVolume;
-        syncVolume(defaultVolume);
     }
 
     function syncVolume(val) {
         let v = parseFloat(val);
-        if(!isNaN(v) && v > 0) {
+        if (!isNaN(v) && v > 0) {
             document.querySelectorAll('.vol-input').forEach(input => {
                 input.value = val;
             });
@@ -561,19 +705,72 @@
 
     function closeOosModal() {
         let modal = document.getElementById('oosModal');
-        if(modal) modal.classList.remove('show');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function parseBatchData(tab) {
+        const textarea = document.getElementById(tab === 'cal' ? 'batch-input-cal' : 'batch-input-qc');
+        const selectEl = document.getElementById(tab === 'cal' ? 'dup-select-cal' : 'dup-select-qc');
+        const statusEl = document.getElementById(tab === 'cal' ? 'batch-status-cal' : 'batch-status-qc');
+        const dupCount = parseInt(selectEl.value, 10) || 3;
+
+        let raw = textarea.value;
+        // 清洗千分位逗號（排除數字內部逗號截斷干擾）
+        raw = raw.replace(/(\d),(?=\d)/g, '$1');
+        const tokens = raw.match(/[-+]?[0-9]*\.?[0-9]+/g);
+        const numbers = tokens ? tokens.map(t => parseFloat(t)).filter(n => !isNaN(n)) : [];
+
+        const targetKeys = (tab === 'cal') ? ['cws1', 'cws2', 'cws3'] : ['qwscl', 'qwsch'];
+        const targetNames = (tab === 'cal') ? 'CWS-1、CWS-2、CWS-3' : 'QWS-CL、QWS-CH';
+
+        statusEl.textContent = `已辨識 ${numbers.length} 筆測值 ｜ 依「${dupCount}重複分組」自動填入 ${targetNames} 平均實測值`;
+
+        targetKeys.forEach((key, idx) => {
+            const startIdx = idx * dupCount;
+            const endIdx = startIdx + dupCount;
+            const group = numbers.slice(startIdx, endIdx);
+            const inputEl = document.querySelector(`.measured-input[data-item="${key}"]`);
+
+            if (inputEl) {
+                if (group.length > 0) {
+                    const avg = group.reduce((a, b) => a + b, 0) / group.length;
+                    inputEl.value = (Math.round(avg * 10) / 10).toFixed(1);
+                } else if (numbers.length === 0) {
+                    inputEl.value = '';
+                }
+            }
+        });
+    }
+
+    function clearBatchInput(tab) {
+        const textarea = document.getElementById(tab === 'cal' ? 'batch-input-cal' : 'batch-input-qc');
+        const selectEl = document.getElementById(tab === 'cal' ? 'dup-select-cal' : 'dup-select-qc');
+        const statusEl = document.getElementById(tab === 'cal' ? 'batch-status-cal' : 'batch-status-qc');
+        const dupCount = parseInt(selectEl.value, 10) || 3;
+        const targetNames = (tab === 'cal') ? 'CWS-1、CWS-2、CWS-3' : 'QWS-CL、QWS-CH';
+
+        textarea.value = '';
+        statusEl.textContent = `已辨識 0 筆測值 ｜ 依「${dupCount}重複分組」自動填入 ${targetNames} 平均實測值`;
+
+        const targetKeys = (tab === 'cal') ? ['cws1', 'cws2', 'cws3'] : ['qwscl', 'qwsch'];
+        targetKeys.forEach(key => {
+            const inputEl = document.querySelector(`.measured-input[data-item="${key}"]`);
+            if (inputEl) inputEl.value = '';
+            const resDiv = document.getElementById(`result-${key}`);
+            if (resDiv) {
+                resDiv.style.display = 'none';
+                resDiv.innerHTML = '';
+            }
+        });
     }
 
     function executeBatchAnalysis() {
         try {
-            let itemsToAnalyze = (currentMode === 'calibrator') ? ['cws1', 'cws2', 'cws3'] : ['qwscl', 'qwsch'];
+            let isCal = (currentMode === 'calibrator');
+            let itemsToAnalyze = isCal ? ['cws1', 'cws2', 'cws3'] : ['qwscl', 'qwsch'];
             let oosItems = [];
-            
-            let isLowYellow = false;
-            let isHighYellow = false;
-            let isLowMeasuredTooLow = false; 
 
-            // 預檢與防呆
+            // 預檢與防呆：確保數值已輸入
             for (let item of itemsToAnalyze) {
                 let inputEl = document.querySelector(`.measured-input[data-item="${item}"]`);
                 let resultDiv = document.getElementById(`result-${item}`);
@@ -582,145 +779,48 @@
                 if (!inputEl || inputEl.value.trim() === "") {
                     if (resultDiv) {
                         resultDiv.className = "inline-result error-info";
-                        resultDiv.innerHTML = `❌ 請輸入實測值`;
+                        resultDiv.innerHTML = `❌ 請輸入平均實測值`;
                         resultDiv.style.display = "block";
                     }
                     return;
                 }
                 let volEl = document.querySelector(`.vol-input[data-item="${item}"]`);
-                // 體積欄位防呆：如果空白或異常，自動填補為當前組別的預設值
                 if (volEl && (volEl.value.trim() === "" || parseFloat(volEl.value) <= 0)) {
-                    volEl.value = (currentMode === 'calibrator') ? "30" : "54";
+                    volEl.value = "30";
                 }
             }
 
-            // 優先讀取高濃度項目實測值
-            let cws3Input = document.querySelector(`.measured-input[data-item="cws3"]`);
-            let qwschInput = document.querySelector(`.measured-input[data-item="qwsch"]`);
-            let c3_m = (cws3Input && cws3Input.value.trim() !== "") ? parseFloat(cws3Input.value) : NaN;
-            let ch_m = (qwschInput && qwschInput.value.trim() !== "") ? parseFloat(qwschInput.value) : NaN;
+            // 讀取高濃度管實測值 (CWS-3 / QWS-CH)
+            let highKey = isCal ? 'cws3' : 'qwsch';
+            let highName = isCal ? 'CWS-3' : 'QWS-CH';
+            let highInput = document.querySelector(`.measured-input[data-item="${highKey}"]`);
+            let highVal = parseFloat(highInput.value);
 
-            // 事前判斷高低濃度是否皆落入黃燈區
-            itemsToAnalyze.forEach(item => {
-                let measured = parseFloat(document.querySelector(`.measured-input[data-item="${item}"]`).value);
-                if (item === 'cws2' || item === 'qwscl') {
-                    if ((measured >= 44.0 && measured < 49.5) || (measured > 60.5 && measured <= 66.0)) {
-                        isLowYellow = true;
-                    }
-                    if (measured >= 44.0 && measured < 49.5) {
-                        isLowMeasuredTooLow = true;
-                    }
+            // 讀取低濃度管實測值 (CWS-2 / QWS-CL)
+            let lowKey = isCal ? 'cws2' : 'qwscl';
+            let lowName = isCal ? 'CWS-2' : 'QWS-CL';
+            let lowInput = document.querySelector(`.measured-input[data-item="${lowKey}"]`);
+            let lowVal = parseFloat(lowInput.value);
+
+            // 1. 優先判定 CWS-3 (QWS-CH) 狀態
+            let isHighGreen = (highVal >= 4950 && highVal <= 6050);
+            let isHighYellow = ((highVal >= 4400 && highVal < 4950) || (highVal > 6050 && highVal <= 6600));
+            let isHighOOS = (highVal < 4400 || highVal > 6600);
+
+            // CWS-3 / QWS-CH 落在可校正區之外：觸發強制阻斷彈窗
+            if (isHighOOS) {
+                oosItems.push(`${highName} (實測值: ${highVal.toFixed(1)} mIU/mL，偏離規格範圍 4400 ~ 6600)`);
+            }
+
+            // CWS-1 背景檢查 (陰性背景，需 < 1.0)
+            if (isCal) {
+                let cws1Val = parseFloat(document.querySelector('.measured-input[data-item="cws1"]').value);
+                if (cws1Val >= 1.0) {
+                    oosItems.push(`CWS-1 (實測值: ${cws1Val.toFixed(1)} mIU/mL，超出允許極限 &lt; 1.0)`);
                 }
-                else if (item === 'cws3' || item === 'qwsch') {
-                    if ((measured >= 4400 && measured < 4950) || (measured > 6050 && measured <= 6600)) isHighYellow = true;
-                }
-            });
+            }
 
-            // 核心比對流程
-            itemsToAnalyze.forEach(item => {
-                let resultDiv = document.getElementById(`result-${item}`);
-                if (!resultDiv) return;
-
-                let measured = parseFloat(document.querySelector(`.measured-input[data-item="${item}"]`).value);
-                let volume = parseFloat(document.querySelector(`.vol-input[data-item="${item}"]`).value) || (currentMode === 'calibrator' ? 30.0 : 54.0);
-
-                let status = ""; 
-                let msgTitle = "";
-                let msgDetail = "";
-                let formulaStr = "";
-                let alertPrefix = "";
-
-                if (item === 'cws1') {
-                    if (measured < 1.0) {
-                        status = "GREEN";
-                        msgTitle = "🟢 規格合規，無需調整";
-                        msgDetail = "實測值符合 CWS-1 背景規格。";
-                    } else {
-                        status = "RED";
-                        oosItems.push(`CWS-1 (實測值: ${measured} mIU/mL，超出允許極限 &lt; 1.0)`);
-                    }
-                } 
-                else if (item === 'cws2' || item === 'qwscl') {
-                    let target = 55.0;
-                    let nameText = item === 'cws2' ? "CWS-2" : "QWS-CL";
-                    let highSpikeName = item === 'cws2' ? "CWS-3" : "QWS-CH";
-                    
-                    let highSpikeConc = 5500.0; 
-                    let matchedHighM = item === 'cws2' ? c3_m : ch_m;
-                    if (!isNaN(matchedHighM) && matchedHighM >= 4950 && matchedHighM <= 6050) {
-                        highSpikeConc = matchedHighM; 
-                    }
-
-                    // 雙黃燈連動控制：只有在雙黃燈皆成立、且低濃度管屬於「實測偏低(isLowMeasuredTooLow)」時，才需要跳出紅字提醒！
-                    if (isLowYellow && isHighYellow && isLowMeasuredTooLow) {
-                        if (currentMode === 'calibrator') {
-                            alertPrefix = `<div style="color:var(--danger-color); font-weight:bold; margin-bottom:10px; border-bottom:1px dashed var(--danger-color); padding-bottom:6px; font-size:0.95rem;">⚠️ 注意：請先調整 CWS-3 至合規，再以其作為添加液調整 CWS-2</div>`;
-                        } else {
-                            alertPrefix = `<div style="color:var(--danger-color); font-weight:bold; margin-bottom:10px; border-bottom:1px dashed var(--danger-color); padding-bottom:6px; font-size:0.95rem;">⚠️ 注意：請先調整 QWS-CH 至合規，再以其作為添加液調整 QWS-CL</div>`;
-                        }
-                    }
-
-                    if (measured >= 49.5 && measured <= 60.5) {
-                        status = "GREEN";
-                        msgTitle = `🟢 符合目標規格`;
-                        msgDetail = `實測濃度落於允許範圍內，無需進行任何校正調配。`;
-                    } else if (measured >= 44.0 && measured < 49.5) {
-                        status = "YELLOW";
-                        let v1 = ((target - measured) * volume) / (highSpikeConc - target);
-                        msgTitle = `🟡 觸發調配：濃度偏低修正`;
-                        msgDetail = `需額外添加：<strong>${highSpikeName}</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL<br><small style="color:#718096;">(備註：此處計算代入之高濃度添加液濃度為 ${highSpikeConc} mIU/mL)</small>`;
-                        formulaStr = `V1 = (55 - ${measured}) × ${volume} ÷ (${highSpikeConc} - 55)`;
-                    } else if (measured > 60.5 && measured <= 66.0) {
-                        status = "YELLOW";
-                        let v2 = ((measured / target) - 1) * volume;
-                        msgTitle = `🟡 觸發調配：濃度偏高稀釋`;
-                        msgDetail = `需額外添加：<strong>蛋白稀釋液 (Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
-                        formulaStr = `V2 = ((${measured} ÷ 55) - 1) × ${volume}`;
-                    } else {
-                        status = "RED";
-                        oosItems.push(`${nameText} (實測值: ${measured} mIU/mL，偏離規格範圍 44.0 ~ 66.0)`);
-                    }
-                } 
-                else if (item === 'cws3' || item === 'qwsch') {
-                    let target = 5500.0;
-                    let nameText = item === 'cws3' ? "CWS-3" : "QWS-CH";
-                    let spikeAwsConc = 550000.0;
-
-                    if (measured >= 4950 && measured <= 6050) {
-                        status = "GREEN";
-                        msgTitle = `🟢 符合目標規格`;
-                        msgDetail = `實測濃度落於允許範圍內，無需進行任何校正調配。`;
-                    } else if (measured >= 4400 && measured < 4950) {
-                        status = "YELLOW";
-                        let v1 = ((target - measured) * volume) / (spikeAwsConc - target);
-                        msgTitle = `🟡 觸發調配：濃度偏低修正`;
-                        msgDetail = `需額外添加：<strong>蛋白工作液 (PWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL`;
-                        formulaStr = `V1 = (5500 - ${measured}) × ${volume} ÷ (550000 - 5500)`;
-                    } else if (measured > 6050 && measured <= 6600) {
-                        status = "YELLOW";
-                        let v2 = ((measured / target) - 1) * volume;
-                        msgTitle = `🟡 觸發調配：濃度偏高稀釋`;
-                        msgDetail = `需額外添加：<strong>蛋白稀釋液 (Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL`;
-                        formulaStr = `V2 = ((${measured} ÷ 5500) - 1) × ${volume}`;
-                    } else {
-                        status = "RED";
-                        oosItems.push(`${nameText} (實測值: ${measured} mIU/mL，偏離規格範圍 4400 ~ 6600)`);
-                    }
-                }
-
-                if (status === "GREEN") {
-                    resultDiv.className = "inline-result pass";
-                    resultDiv.innerHTML = alertPrefix + `<div class="result-title"><span>${msgTitle}</span></div><p>${msgDetail}</p>`;
-                    resultDiv.style.display = "block";
-                } else if (status === "YELLOW") {
-                    resultDiv.className = "inline-result adjust";
-                    let content = alertPrefix + `<div class="result-title"><span>${msgTitle}</span></div><p>${msgDetail}</p>`;
-                    if(formulaStr) content += `<span class="formula-display">SOP 公式: ${formulaStr}</span>`;
-                    resultDiv.innerHTML = content;
-                    resultDiv.style.display = "block";
-                }
-            });
-
+            // 若有 OOS 項目，跳出彈窗阻斷後續調配
             if (oosItems.length > 0) {
                 let modal = document.getElementById('oosModal');
                 let modalBody = document.getElementById('oosModalBody');
@@ -729,12 +829,94 @@
                 listHtml += "</ul><p style='margin-top:15px; font-weight:bold; color:#9b2c2c;'>🚨 檢驗與量測結果偏離規格(OOS)，請暫停工作</p>";
                 modalBody.innerHTML = listHtml;
                 modal.classList.add('show');
+                return;
             }
+
+            // 2. 當 CWS-3 落在綠燈或可校正區，解除 CWS-2 的 OOS 要求並計算調配
+            let isLowMeasuredTooLow = (lowVal < 49.5);
+            let alertPrefix = "";
+
+            // 若低濃度偏低且高濃度管為黃燈，跳出順序警示
+            if (isHighYellow && isLowMeasuredTooLow) {
+                alertPrefix = `<div style="color:var(--danger-color); font-weight:bold; margin-bottom:10px; border-bottom:1px dashed var(--danger-color); padding-bottom:6px; font-size:0.95rem;">⚠️ 注意：請先調整 ${highName} 至合規，再以其作為添加液調整 ${lowName}</div>`;
+            }
+
+            // 渲染 CWS-1
+            if (isCal) {
+                let cws1Div = document.getElementById('result-cws1');
+                cws1Div.className = "inline-result pass";
+                cws1Div.innerHTML = `<div class="result-title"><span>🟢 規格合規，無需調整</span></div><p>實測值符合 CWS-1 背景規格。</p>`;
+                cws1Div.style.display = "block";
+            }
+
+            // 渲染 CWS-2 / QWS-CL
+            let lowDiv = document.getElementById(`result-${lowKey}`);
+            let lowVol = parseFloat(document.querySelector(`.vol-input[data-item="${lowKey}"]`).value) || 30.0;
+            let targetLow = 55.0;
+            let highSpikeConc = isHighGreen ? highVal : 5500.0;
+
+            if (lowVal >= 49.5 && lowVal <= 60.5) {
+                lowDiv.className = "inline-result pass";
+                lowDiv.innerHTML = `<div class="result-title"><span>🟢 符合目標規格</span></div><p>實測濃度落於允許範圍內，無需進行任何校正調配。</p>`;
+                lowDiv.style.display = "block";
+            } else if (lowVal < 49.5) {
+                // 偏低修正：即使 < 44.0 亦直接換算
+                let v1 = ((targetLow - lowVal) * lowVol) / (highSpikeConc - targetLow);
+                lowDiv.className = "inline-result adjust";
+                let content = alertPrefix + `
+                    <div class="result-title"><span>🟡 觸發調配：濃度偏低修正</span></div>
+                    <p>需額外添加：<strong>${highName}</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL<br><small style="color:#718096;">(備註：此處計算代入之高濃度添加液濃度為 ${highSpikeConc} mIU/mL)</small></p>
+                    <span class="formula-display">SOP 公式: V1 = (55 - ${lowVal}) × ${lowVol} ÷ (${highSpikeConc} - 55)</span>
+                `;
+                lowDiv.innerHTML = content;
+                lowDiv.style.display = "block";
+            } else {
+                // 偏高稀釋：即使 > 66.0 亦直接換算
+                let v2 = ((lowVal / targetLow) - 1) * lowVol;
+                lowDiv.className = "inline-result adjust";
+                let content = alertPrefix + `
+                    <div class="result-title"><span>🟡 觸發調配：濃度偏高稀釋</span></div>
+                    <p>需額外添加：<strong>蛋白稀釋液 (Protein Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL</p>
+                    <span class="formula-display">SOP 公式: V2 = ((${lowVal} ÷ 55) - 1) × ${lowVol}</span>
+                `;
+                lowDiv.innerHTML = content;
+                lowDiv.style.display = "block";
+            }
+
+            // 渲染 CWS-3 / QWS-CH
+            let highDiv = document.getElementById(`result-${highKey}`);
+            let highVol = parseFloat(document.querySelector(`.vol-input[data-item="${highKey}"]`).value) || 30.0;
+            let targetHigh = 5500.0;
+            let spikeAwsConc = 550000.0;
+
+            if (isHighGreen) {
+                highDiv.className = "inline-result pass";
+                highDiv.innerHTML = `<div class="result-title"><span>🟢 符合目標規格</span></div><p>實測濃度落於允許範圍內，無需進行任何校正調配。</p>`;
+                highDiv.style.display = "block";
+            } else if (highVal >= 4400 && highVal < 4950) {
+                let v1 = ((targetHigh - highVal) * highVol) / (spikeAwsConc - targetHigh);
+                highDiv.className = "inline-result adjust";
+                highDiv.innerHTML = `
+                    <div class="result-title"><span>🟡 觸發調配：濃度偏低修正</span></div>
+                    <p>需額外添加：<strong>抗原工作液 (AWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL</p>
+                    <span class="formula-display">SOP 公式: V1 = (5500 - ${highVal}) × ${highVol} ÷ (550000 - 5500)</span>
+                `;
+                highDiv.style.display = "block";
+            } else if (highVal > 6050 && highVal <= 6600) {
+                let v2 = ((highVal / targetHigh) - 1) * highVol;
+                highDiv.className = "inline-result adjust";
+                highDiv.innerHTML = `
+                    <div class="result-title"><span>🟡 觸發調配：濃度偏高稀釋</span></div>
+                    <p>需額外添加：<strong>抗原稀釋液 (Antigen Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL</p>
+                    <span class="formula-display">SOP 公式: V2 = ((${highVal} ÷ 5500) - 1) × ${highVol}</span>
+                `;
+                highDiv.style.display = "block";
+            }
+
         } catch (err) {
             alert("計算引擎發生未預期錯誤：" + err.message);
         }
     }
 </script>
-
 </body>
 </html>
