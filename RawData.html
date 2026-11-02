@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析結果整合工作台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- SheetJS 樣式擴充版 (xlsx-js-style) 用於自訂 Excel 儲存格底色與字體樣式 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .symbol-font {
+            font-family: 'Symbol', 'Noto Sans TC', sans-serif;
+        }
+        .brand-blue {
+            background-color: rgb(14, 57, 99);
+        }
+        .brand-blue-light {
+            background-color: rgb(20, 78, 134);
+        }
+        ::selection {
+            background-color: rgb(14, 57, 99);
+            color: white;
+        }
+        .dropzone-active {
+            border-color: rgb(14, 57, 99) !important;
+            background-color: rgba(14, 57, 99, 0.05) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12 text-base">
+
+<!-- 頂部標頭導覽區 (Header) -->
+<div class="brand-blue text-white shadow-lg mb-6 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.06] pointer-events-none"
+         style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-6 relative z-10">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl brand-blue-light flex items-center justify-center text-xl shrink-0 ring-1 ring-white/10 shadow-inner">
+                    🔬
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
+                        分析結果整合工作台
+                    </h1>
+                    <p class="text-xs text-slate-300 mt-1 font-medium tracking-wide">
+                        CLIA Analytical Results Workbench (Calibration / QC / Sample)
+                    </p>
+                </div>
+            </div>
+
+            <a href="index.html"
+               class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                      bg-white/10 border border-white/30 text-white
+                      hover:bg-white hover:text-[rgb(14,57,99)]
+                      hover:border-white
+                      transition-all duration-150
+                      shadow-sm font-medium text-sm tracking-wide whitespace-nowrap">
+                🏠 回到主控台首頁
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 分頁切換選單 (Tabs Navigation) -->
+<div class="max-w-6xl mx-auto px-4 mb-6">
+    <div class="flex border-b border-slate-200 gap-2 overflow-x-auto">
+        <button id="tabBtnCal" onclick="switchMainTab('cal')" class="px-5 py-3 border-b-2 border-[rgb(14,57,99)] text-[rgb(14,57,99)] font-bold text-sm md:text-base flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap">
+            <span>🎯</span> 校正分析
+        </button>
+        <button id="tabBtnQc" onclick="switchMainTab('qc')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-bold text-sm md:text-base flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap">
+            <span>🛡️</span> 品管分析
+        </button>
+        <button id="tabBtnSample" onclick="switchMainTab('sample')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-bold text-sm md:text-base flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap">
+            <span>🧪</span> 樣本分析
+        </button>
+    </div>
+</div>
+
+<!-- 主容器 -->
+<div class="max-w-6xl mx-auto px-4 space-y-6">
+
+    <!-- ==================== 分頁 1：校正分析 ==================== -->
+    <div id="tabContentCal" class="space-y-6">
+        <!-- 卡片 1：校正檔案匯入 (純白底色) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-100 whitespace-nowrap">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">🎯</span>
+                校正檔案匯入與轉檔處理
+            </h2>
+            <div id="dropzoneCal" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-7 text-center cursor-pointer transition-all duration-200 bg-slate-50/50 hover:bg-slate-50">
+                <input type="file" id="fileInputCal" accept=".csv" class="hidden">
+                <div class="w-12 h-12 mx-auto rounded-full bg-blue-50 flex items-center justify-center text-2xl text-blue-600 mb-2">📥</div>
+                <p class="text-sm font-bold text-slate-800 mb-1">點擊選取校正檔 或 拖曳 .csv 至此區域</p>
+                <p class="text-xs text-slate-500">自動執行 GB18030 簡體解碼、空列過濾、向前補齊與數值標記</p>
+            </div>
+
+            <!-- 重複數設定列 -->
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <label for="repSelectCal" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span>⚙️</span> 重複測試數：
+                    </label>
+                    <select id="repSelectCal" onchange="onRepChange('cal')" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[rgb(14,57,99)]/30 focus:border-[rgb(14,57,99)] cursor-pointer">
+                        <option value="2" selected>2 重複 (預設)</option>
+                        <option value="3">3 重複</option>
+                        <option value="4">4 重複</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="exportBarCal" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">已就緒</span>
+                    <span id="exportNameCal" class="text-xs font-bold text-slate-700 code-font">-</span>
+                </div>
+                <div class="flex items-center gap-2.5 w-full md:w-auto">
+                    <button onclick="downloadTransferredExcel('cal')" class="w-full md:w-auto px-4 py-2 brand-blue hover:brightness-110 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                        🚀 下載轉檔後資料 (.xlsx)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 2：校正數據預覽區 (純白底色，唯讀不可修改) -->
+        <div id="previewCardCal" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-600">🔒 數據唯讀（不可編輯）</span>
+                    <h3 class="text-base font-bold text-slate-900">校正分析數據預覽</h3>
+                </div>
+            </div>
+            <!-- 資訊摘要列 -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                <div><span class="text-slate-500 font-medium">項目名稱：</span><span id="infoItemCal" class="font-bold text-slate-800">-</span></div>
+                <div><span class="text-slate-500 font-medium">校正液批號：</span><span id="infoLotCal" class="font-bold text-slate-800 code-font">-</span></div>
+                <div><span class="text-slate-500 font-medium">試劑批號：</span><span id="infoReagentCal" class="font-bold text-slate-800 code-font">-</span></div>
+                <div><span class="text-slate-500 font-medium">完成時間：</span><span id="infoTimeCal" class="font-bold text-slate-800 code-font">-</span></div>
+            </div>
+            <!-- 數據表格 -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold whitespace-nowrap">
+                        <tr>
+                            <th class="py-2.5 px-3">水平</th>
+                            <th class="py-2.5 px-3 text-center">測試重複</th>
+                            <th class="py-2.5 px-3 text-right">結果</th>
+                            <th class="py-2.5 px-3 text-center">單位</th>
+                            <th class="py-2.5 px-3 text-right">發光值RLU</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyCal" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 分頁 2：品管分析 ==================== -->
+    <div id="tabContentQc" class="hidden space-y-6">
+        <!-- 卡片 1：品管檔案匯入 (純白底色) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-100 whitespace-nowrap">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">🛡️</span>
+                品管檔案匯入與轉檔處理
+            </h2>
+            <div id="dropzoneQc" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-7 text-center cursor-pointer transition-all duration-200 bg-slate-50/50 hover:bg-slate-50">
+                <input type="file" id="fileInputQc" accept=".csv" class="hidden">
+                <div class="w-12 h-12 mx-auto rounded-full bg-blue-50 flex items-center justify-center text-2xl text-blue-600 mb-2">📥</div>
+                <p class="text-sm font-bold text-slate-800 mb-1">點擊選取引管檔 或 拖曳 .csv 至此區域</p>
+                <p class="text-xs text-slate-500">自動執行 GB18030 簡體解碼、空列過濾、向前補齊與數值標記</p>
+            </div>
+
+            <!-- 重複數設定列 -->
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <label for="repSelectQc" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span>⚙️</span> 重複測試數：
+                    </label>
+                    <select id="repSelectQc" onchange="onRepChange('qc')" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[rgb(14,57,99)]/30 focus:border-[rgb(14,57,99)] cursor-pointer">
+                        <option value="2" selected>2 重複 (預設)</option>
+                        <option value="3">3 重複</option>
+                        <option value="4">4 重複</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="exportBarQc" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">已就緒</span>
+                    <span id="exportNameQc" class="text-xs font-bold text-slate-700 code-font">-</span>
+                </div>
+                <div class="flex items-center gap-2.5 w-full md:w-auto">
+                    <button onclick="downloadTransferredExcel('qc')" class="w-full md:w-auto px-4 py-2 brand-blue hover:brightness-110 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                        🚀 下載轉檔後資料 (.xlsx)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 2：品管數據預覽區 (純白底色，唯讀不可修改) -->
+        <div id="previewCardQc" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-600">🔒 數據唯讀（不可編輯）</span>
+                    <h3 class="text-base font-bold text-slate-900">品管分析與 2SD 判定結果</h3>
+                </div>
+            </div>
+            <!-- 資訊摘要列 -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                <div><span class="text-slate-500 font-medium">檢驗項目：</span><span id="infoItemQc" class="font-bold text-slate-800"><span class="symbol-font">b</span>-HCG</span></div>
+                <div><span class="text-slate-500 font-medium">試劑批號：</span><span id="infoReagentQc" class="font-bold text-slate-800 code-font">-</span></div>
+                <div><span class="text-slate-500 font-medium">完成時間：</span><span id="infoTimeQc" class="font-bold text-slate-800 code-font">-</span></div>
+                <div><span class="text-slate-500 font-medium">品管判定標準：</span><span class="font-bold text-blue-700 code-font">目標濃度 ± 2SD</span></div>
+            </div>
+            <!-- 數據表格 (目標濃度與SD欄位在判定結果右側) -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold whitespace-nowrap">
+                        <tr>
+                            <th class="py-2.5 px-3">檢驗項目</th>
+                            <th class="py-2.5 px-3 text-center">測試重複</th>
+                            <th class="py-2.5 px-3 text-right">結果</th>
+                            <th class="py-2.5 px-3 text-center">單位</th>
+                            <th class="py-2.5 px-3 text-right">發光值RLU</th>
+                            <th class="py-2.5 px-3 text-center">判定結果</th>
+                            <th class="py-2.5 px-3 text-right">目標濃度</th>
+                            <th class="py-2.5 px-3 text-right">SD值</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyQc" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 分頁 3：樣本分析 ==================== -->
+    <div id="tabContentSample" class="hidden space-y-6">
+        <!-- 卡片 1：樣本檔案匯入 (純白底色) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-100 whitespace-nowrap">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">🧪</span>
+                樣本檔案匯入與轉檔處理
+            </h2>
+            <div id="dropzoneSample" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-7 text-center cursor-pointer transition-all duration-200 bg-slate-50/50 hover:bg-slate-50">
+                <input type="file" id="fileInputSample" accept=".csv" class="hidden">
+                <div class="w-12 h-12 mx-auto rounded-full bg-blue-50 flex items-center justify-center text-2xl text-blue-600 mb-2">📥</div>
+                <p class="text-sm font-bold text-slate-800 mb-1">點擊選取樣本檔 或 拖曳 .csv 至此區域</p>
+                <p class="text-xs text-slate-500">自動執行 GB18030 簡體解碼、空列過濾、向前補齊與數值標記</p>
+            </div>
+
+            <!-- 重複數設定列 -->
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <label for="repSelectSample" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span>⚙️</span> 重複測試數：
+                    </label>
+                    <select id="repSelectSample" onchange="onRepChange('sample')" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[rgb(14,57,99)]/30 focus:border-[rgb(14,57,99)] cursor-pointer">
+                        <option value="2">2 重複</option>
+                        <option value="3" selected>3 重複 (預設)</option>
+                        <option value="4">4 重複</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="exportBarSample" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">已就緒</span>
+                    <span id="exportNameSample" class="text-xs font-bold text-slate-700 code-font">-</span>
+                </div>
+                <div class="flex items-center gap-2.5 w-full md:w-auto">
+                    <button onclick="downloadTransferredExcel('sample')" class="w-full md:w-auto px-4 py-2 brand-blue hover:brightness-110 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                        🚀 下載轉檔後資料 (.xlsx)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 2：樣本數據預覽區 (純白底色，唯讀不可修改) -->
+        <div id="previewCardSample" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-600">🔒 數據唯讀（不可編輯）</span>
+                    <h3 class="text-base font-bold text-slate-900">樣本分析數據預覽</h3>
+                </div>
+            </div>
+            <!-- 資訊摘要列 -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                <div><span class="text-slate-500 font-medium">檢體總數：</span><span id="infoCountSample" class="font-bold text-slate-800 code-font">0</span></div>
+                <div><span class="text-slate-500 font-medium">試劑批號：</span><span id="infoReagentSample" class="font-bold text-slate-800 code-font">-</span></div>
+                <div><span class="text-slate-500 font-medium">完成時間：</span><span id="infoTimeSample" class="font-bold text-slate-800 code-font">-</span></div>
+            </div>
+            <!-- 數據表格 -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold whitespace-nowrap">
+                        <tr>
+                            <th class="py-2.5 px-3">編號</th>
+                            <th class="py-2.5 px-3">檢驗項目</th>
+                            <th class="py-2.5 px-3 text-center">測試重複</th>
+                            <th class="py-2.5 px-3 text-right">結果</th>
+                            <th class="py-2.5 px-3 text-center">單位</th>
+                            <th class="py-2.5 px-3 text-right">發光值RLU</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodySample" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const s2tDict = {
+        '标': '標', '题': '題', '样': '樣', '本': '本', '值': '值', '数': '數', '据': '據', '列': '列', '行': '行',
+        '浓': '濃', '度': '度', '测': '測', '试': '試', '结': '結', '果': '果', '状': '狀', '态': '態', '时': '時',
+        '间': '間', '日': '日', '期': '期', '序': '序', '号': '號', '发': '發', '光': '光', '质': '質', '量': '量',
+        '管': '管', '位': '位', '置': '置', '孔': '孔', '板': '板', '复': '複', '计': '計', '算': '算',
+        '准': '準', '曲': '曲', '线': '線', '系': '係', '统': '統', '设': '設', '备': '備', '器': '器',
+        '批': '批', '类': '類', '型': '型', '项': '項', '目': '目', '注': '註', '说': '說',
+        '明': '明', '单': '單', '定': '定', '性': '性', '阴': '陰', '阳': '陽', '校': '校', '正': '正',
+        '品': '品', '控': '控', '制': '制', '稀': '稀', '释': '釋', '倍': '倍', '总': '總', '体': '體',
+        '积': '積', '平': '平', '均': '均', '差': '差', '异': '異', '率': '率', '合': '合', '格': '格',
+        '常': '常', '清': '清', '空': '空', '无': '無', '效': '效', '转': '轉', '换': '換', '输': '輸',
+        '入': '入', '出': '出', '保': '保', '存': '存', '载': '載'
+    };
+
+    function convertToTraditional(text) {
+        if (typeof text !== 'string') return text;
+        let res = '';
+        for (let char of text) {
+            res += s2tDict[char] || char;
+        }
+        return res;
+    }
+
+    const tabState = {
+        cal: { rawData: [], cleanedData: [], baseName: '', numericCols: new Set(), yellowCols: new Set(), parsedRows: [], info: {} },
+        qc: { rawData: [], cleanedData: [], baseName: '', numericCols: new Set(), yellowCols: new Set(), parsedRows: [], info: {} },
+        sample: { rawData: [], cleanedData: [], baseName: '', numericCols: new Set(), yellowCols: new Set(), parsedRows: [], info: {} }
+    };
+
+    function switchMainTab(type) {
+        ['cal', 'qc', 'sample'].forEach(t => {
+            const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            const content = document.getElementById(`tabContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+            if (t === type) {
+                btn.className = "px-5 py-3 border-b-2 border-[rgb(14,57,99)] text-[rgb(14,57,99)] font-bold text-sm md:text-base flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap";
+                content.classList.remove('hidden');
+            } else {
+                btn.className = "px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-bold text-sm md:text-base flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap";
+                content.classList.add('hidden');
+            }
+        });
+    }
+
+    function getNowFormatted() {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function initDropzone(type) {
+        const dropzone = document.getElementById(`dropzone${type.charAt(0).toUpperCase() + type.slice(1)}`);
+        const fileInput = document.getElementById(`fileInput${type.charAt(0).toUpperCase() + type.slice(1)}`);
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dropzone-active'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dropzone-active');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0], type);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0], type);
+        });
+    }
+
+    ['cal', 'qc', 'sample'].forEach(initDropzone);
+
+    function handleFile(file, type) {
+        const fullFileName = file.name;
+        const baseName = fullFileName.substring(0, fullFileName.lastIndexOf('.')) || fullFileName;
+        tabState[type].baseName = baseName;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const buffer = e.target.result;
+            let textContent = '';
+            try {
+                const decoder = new TextDecoder('gb18030');
+                textContent = decoder.decode(buffer);
+            } catch (err) {
+                const decoderUtf8 = new TextDecoder('utf-8');
+                textContent = decoderUtf8.decode(buffer);
+            }
+            const rawMatrix = parseCSVToMatrix(textContent);
+            tabState[type].rawData = rawMatrix;
+            processData(type);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function parseCSVToMatrix(text) {
+        const lines = text.split(/\r\n|\n|\r/);
+        const matrix = [];
+        for (let line of lines) {
+            const row = line.split(',').map(item => item.trim().replace(/^"|"$/g, ''));
+            matrix.push(row);
+        }
+        return matrix;
+    }
+
+    function processData(type) {
+        const state = tabState[type];
+        const matrix = state.rawData;
+        if (!matrix || matrix.length === 0) return;
+
+        state.numericCols.clear();
+        state.yellowCols.clear();
+
+        const baseNumKeywords = ['結果', '目标浓度', '目標濃度', 'SD值', 'SD', '發光值', '发光值'];
+        const rawHeader = matrix[0] || [];
+        const headerRow = rawHeader.map(col => convertToTraditional(String(col || '').trim()));
+
+        headerRow.forEach((colName, idx) => {
+            if (baseNumKeywords.some(k => colName.includes(k) || colName.includes(convertToTraditional(k)))) {
+                state.numericCols.add(idx);
+            }
+            if (colName.includes('結果') || colName.includes('發光值') || colName.includes('发光值')) {
+                state.yellowCols.add(idx);
+            }
+        });
+
+        let cleaned = [headerRow];
+        let lastKnownValues = {};
+
+        for (let r = 1; r < matrix.length; r++) {
+            const row = matrix[r];
+            const isEmptyRow = row.every(c => c === null || c === undefined || String(c).trim() === '');
+            if (isEmptyRow) continue;
+            const hasDataInRow = row.some(c => c !== null && c !== undefined && String(c).trim() !== '');
+            if (!hasDataInRow) continue;
+
+            const processedRow = [];
+            for (let c = 0; c < headerRow.length; c++) {
+                let cellVal = row[c] !== undefined && row[c] !== null ? String(row[c]).trim() : '';
+                cellVal = convertToTraditional(cellVal);
+
+                if (!state.numericCols.has(c)) {
+                    if (cellVal === '' && lastKnownValues[c] !== undefined && lastKnownValues[c] !== '') {
+                        cellVal = lastKnownValues[c];
+                    } else if (cellVal !== '') {
+                        lastKnownValues[c] = cellVal;
+                    }
+                }
+
+                if (state.numericCols.has(c)) {
+                    let cleanNumStr = cellVal.replace(/,/g, '');
+                    if (!isNaN(parseFloat(cleanNumStr)) && isFinite(cleanNumStr)) {
+                        cellVal = parseFloat(cleanNumStr);
+                    }
+                }
+                processedRow.push(cellVal);
+            }
+            cleaned.push(processedRow);
+        }
+
+        state.cleanedData = cleaned;
+
+        let suffix = '';
+        if (type === 'cal') suffix = '_C_trans';
+        if (type === 'qc') suffix = '_Q_trans';
+        if (type === 'sample') suffix = '_Sample_trans';
+
+        const finalFilename = `${state.baseName}${suffix}.xlsx`;
+        document.getElementById(`exportName${type.charAt(0).toUpperCase() + type.slice(1)}`).textContent = finalFilename;
+        document.getElementById(`exportBar${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.remove('hidden');
+
+        state.info.time = getNowFormatted();
+        renderTab(type);
+    }
+
+    function renderTab(type) {
+        const cleaned = tabState[type].cleanedData;
+        if (!cleaned || cleaned.length === 0) return;
+        if (type === 'cal') renderCalibration(cleaned);
+        if (type === 'qc') renderQualityControl(cleaned);
+        if (type === 'sample') renderSample(cleaned);
+    }
+
+    function onRepChange(type) {
+        if (tabState[type].cleanedData && tabState[type].cleanedData.length > 0) {
+            renderTab(type);
+        }
+    }
+
+    function getSelectedReps(type) {
+        const selectId = `repSelect${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        const el = document.getElementById(selectId);
+        return el ? (parseInt(el.value, 10) || 2) : 2;
+    }
+
+    function downloadTransferredExcel(type) {
+        const state = tabState[type];
+        if (!state.cleanedData || state.cleanedData.length === 0) return;
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(state.cleanedData);
+
+        if (ws['!ref']) {
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = 1; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = ws[cellAddress];
+                    if (!cell) continue;
+
+                    const isNumeric = state.numericCols.has(C);
+                    const isYellow = state.yellowCols.has(C);
+
+                    if (isNumeric && cell.v !== undefined && cell.v !== '') {
+                        let cleanNum = String(cell.v).replace(/,/g, '').trim();
+                        if (!isNaN(parseFloat(cleanNum)) && isFinite(cleanNum)) {
+                            cell.t = 'n';
+                            cell.v = parseFloat(cleanNum);
+                        }
+                    }
+
+                    cell.s = cell.s || {};
+                    if (isYellow) {
+                        cell.s.fill = { fgColor: { rgb: "FFFFCC" } };
+                    }
+                    if (isNumeric) {
+                        cell.s.alignment = { horizontal: "right", vertical: "center" };
+                        cell.s.font = { name: "JetBrains Mono", sz: 10 };
+                    }
+                }
+            }
+        }
+
+        let suffix = type === 'cal' ? '_C_trans' : (type === 'qc' ? '_Q_trans' : '_Sample_trans');
+        XLSX.utils.book_append_sheet(wb, ws, "Transfer_Data");
+        XLSX.writeFile(wb, `${state.baseName}${suffix}.xlsx`);
+    }
+
+    function findExactColIndex(header, exactKey) {
+        for (let i = 0; i < header.length; i++) {
+            const col = header[i];
+            if (col === exactKey) return i;
+        }
+        return -1;
+    }
+
+    function findColIndex(header, keys) {
+        for (let i = 0; i < header.length; i++) {
+            const col = header[i];
+            if (keys.some(k => col.includes(k))) return i;
+        }
+        return -1;
+    }
+
+    // 1. 校正分析渲染
+    function renderCalibration(cleaned) {
+        const header = cleaned[0];
+        const itemIdx = findColIndex(header, ['項目', '項目名稱', '分析物']);
+        const levelIdx = findColIndex(header, ['水平', '濃度', '點位', '標籤', '樣本編號']);
+        const resIdx = findColIndex(header, ['結果']);
+        const unitIdx = findColIndex(header, ['單位']);
+        const rluIdx = findColIndex(header, ['發光值']);
+        const calLotIdx = findColIndex(header, ['校正液批號', '校正品批號', '標定批號']);
+        const rgtLotIdx = findColIndex(header, ['試劑批號']);
+
+        const firstData = cleaned[1] || [];
+        const itemName = itemIdx !== -1 ? firstData[itemIdx] : 'β-HCG';
+        const calLot = calLotIdx !== -1 ? firstData[calLotIdx] : (cleaned.find(r => r[calLotIdx])?.[calLotIdx] || 'CAL-2026');
+        const rgtLot = rgtLotIdx !== -1 ? firstData[rgtLotIdx] : (cleaned.find(r => r[rgtLotIdx])?.[rgtLotIdx] || 'REA-2026');
+        const unit = unitIdx !== -1 ? firstData[unitIdx] : 'mIU/mL';
+
+        tabState.cal.info = { item: itemName, lot: calLot, reagent: rgtLot, time: tabState.cal.info.time || getNowFormatted() };
+        document.getElementById('infoItemCal').textContent = itemName;
+        document.getElementById('infoLotCal').textContent = calLot;
+        document.getElementById('infoReagentCal').textContent = rgtLot;
+        document.getElementById('infoTimeCal').textContent = tabState.cal.info.time;
+
+        const reps = getSelectedReps('cal');
+
+        const groups = {};
+        for (let r = 1; r < cleaned.length; r++) {
+            const row = cleaned[r];
+            const lvl = levelIdx !== -1 ? row[levelIdx] : `Level ${Math.ceil(r/reps)}`;
+            if (!groups[lvl]) groups[lvl] = [];
+            groups[lvl].push({
+                res: typeof row[resIdx] === 'number' ? row[resIdx] : parseFloat(String(row[resIdx]).replace(/,/g, '')) || 0,
+                rlu: typeof row[rluIdx] === 'number' ? row[rluIdx] : parseFloat(String(row[rluIdx]).replace(/,/g, '')) || 0,
+                unit: unitIdx !== -1 && row[unitIdx] ? row[unitIdx] : unit
+            });
+        }
+
+        const tbody = document.getElementById('tableBodyCal');
+        tbody.innerHTML = '';
+        tabState.cal.parsedRows = [];
+
+        Object.keys(groups).forEach(lvl => {
+            const items = groups[lvl].slice(0, reps);
+            let sumRes = 0, sumRlu = 0;
+
+            items.forEach((item, idx) => {
+                sumRes += item.res;
+                sumRlu += item.rlu;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">${idx === 0 ? lvl : ''}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-500 code-font">Rep ${idx + 1}</td>
+                    <td class="py-2.5 px-3 text-right code-font font-bold text-slate-900">${item.res.toFixed(1)}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-600">${item.unit}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-700">${Math.round(item.rlu).toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+                tabState.cal.parsedRows.push({ level: lvl, rep: `Rep ${idx + 1}`, res: item.res.toFixed(1), unit: item.unit, rlu: Math.round(item.rlu) });
+            });
+
+            if (items.length > 0) {
+                const avgRes = (sumRes / items.length).toFixed(1);
+                const avgRlu = (sumRlu / items.length).toFixed(1);
+                const trAvg = document.createElement('tr');
+                trAvg.className = "bg-slate-100 font-bold border-y border-slate-200";
+                trAvg.innerHTML = `
+                    <td class="py-2.5 px-3 text-slate-900">${lvl}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-700">平均Avg.</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-900">${avgRes}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-800">${items[0].unit}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-900">${parseFloat(avgRlu).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                `;
+                tbody.appendChild(trAvg);
+                tabState.cal.parsedRows.push({ level: lvl, rep: '平均Avg.', res: avgRes, unit: items[0].unit, rlu: avgRlu, isAvg: true });
+            }
+        });
+
+        document.getElementById('previewCardCal').classList.remove('hidden');
+    }
+
+    // 2. 品管分析渲染
+    function renderQualityControl(cleaned) {
+        const header = cleaned[0];
+        const resIdx = findColIndex(header, ['結果']);
+        const unitIdx = findColIndex(header, ['單位']);
+        const targetIdx = findColIndex(header, ['目標濃度', '目標值', '靶值']);
+        const sdIdx = findColIndex(header, ['SD值', 'SD']);
+        const rluIdx = findColIndex(header, ['發光值']);
+        const rgtLotIdx = findColIndex(header, ['試劑批號']);
+
+        const firstData = cleaned[1] || [];
+        const rgtLot = rgtLotIdx !== -1 ? firstData[rgtLotIdx] : (cleaned.find(r => r[rgtLotIdx])?.[rgtLotIdx] || 'REA-2026');
+        const defaultUnit = unitIdx !== -1 ? firstData[unitIdx] : 'mIU/mL';
+
+        tabState.qc.info = { reagent: rgtLot, time: tabState.qc.info.time || getNowFormatted() };
+        document.getElementById('infoReagentQc').textContent = rgtLot;
+        document.getElementById('infoTimeQc').textContent = tabState.qc.info.time;
+
+        const reps = getSelectedReps('qc');
+
+        const rawList = [];
+        for (let r = 1; r < cleaned.length; r++) {
+            const row = cleaned[r];
+            rawList.push({
+                res: typeof row[resIdx] === 'number' ? row[resIdx] : parseFloat(String(row[resIdx]).replace(/,/g, '')) || 0,
+                unit: unitIdx !== -1 && row[unitIdx] ? row[unitIdx] : defaultUnit,
+                target: targetIdx !== -1 ? (typeof row[targetIdx] === 'number' ? row[targetIdx] : parseFloat(row[targetIdx]) || 55.0) : 55.0,
+                sd: sdIdx !== -1 ? (typeof row[sdIdx] === 'number' ? row[sdIdx] : parseFloat(row[sdIdx]) || 2.5) : 2.5,
+                rlu: typeof row[rluIdx] === 'number' ? row[rluIdx] : parseFloat(String(row[rluIdx]).replace(/,/g, '')) || 0
+            });
+        }
+
+        const groups = { 'β-HCG CL': [], 'β-HCG CH': [] };
+        if (rawList.length <= reps) {
+            groups['β-HCG CL'] = rawList.slice(0, reps);
+        } else {
+            const mid = Math.ceil(rawList.length / 2);
+            const part1 = rawList.slice(0, mid);
+            const part2 = rawList.slice(mid);
+            const avg1 = part1.reduce((s, it) => s + it.res, 0) / (part1.length || 1);
+            const avg2 = part2.reduce((s, it) => s + it.res, 0) / (part2.length || 1);
+
+            if (avg1 <= avg2) {
+                groups['β-HCG CL'] = part1.slice(0, reps);
+                groups['β-HCG CH'] = part2.slice(0, reps);
+            } else {
+                groups['β-HCG CL'] = part2.slice(0, reps);
+                groups['β-HCG CH'] = part1.slice(0, reps);
+            }
+        }
+
+        const tbody = document.getElementById('tableBodyQc');
+        tbody.innerHTML = '';
+        tabState.qc.parsedRows = [];
+
+        Object.keys(groups).forEach(itemKey => {
+            const items = groups[itemKey];
+            if (items.length === 0) return;
+
+            let sumRes = 0, sumRlu = 0;
+            const targetVal = items[0].target;
+            const sdVal = items[0].sd;
+
+            items.forEach((item, idx) => {
+                sumRes += item.res;
+                sumRlu += item.rlu;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">${idx === 0 ? `<span class="symbol-font">b</span>-HCG ${itemKey.split(' ')[1]}` : ''}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-500 code-font">Rep ${idx + 1}</td>
+                    <td class="py-2.5 px-3 text-right code-font font-bold text-slate-900">${item.res.toFixed(1)}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-600">${item.unit}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-700">${Math.round(item.rlu).toLocaleString()}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-400">-</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-600">${targetVal.toFixed(1)}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-600">${sdVal.toFixed(1)}</td>
+                `;
+                tbody.appendChild(tr);
+                tabState.qc.parsedRows.push({
+                    name: itemKey, rep: `Rep ${idx + 1}`, res: item.res.toFixed(1), unit: item.unit,
+                    rlu: Math.round(item.rlu), verdict: '-', target: targetVal.toFixed(1), sd: sdVal.toFixed(1)
+                });
+            });
+
+            const avgRes = sumRes / items.length;
+            const avgRlu = sumRlu / items.length;
+            const lowerLimit = targetVal - (2 * sdVal);
+            const upperLimit = targetVal + (2 * sdVal);
+            const isPass = (avgRes >= lowerLimit && avgRes <= upperLimit);
+
+            const trAvg = document.createElement('tr');
+            trAvg.className = "bg-slate-100 font-bold border-y border-slate-200";
+            trAvg.innerHTML = `
+                <td class="py-2.5 px-3 text-slate-900"><span class="symbol-font">b</span>-HCG ${itemKey.split(' ')[1]}</td>
+                <td class="py-2.5 px-3 text-center text-slate-700">平均Avg.</td>
+                <td class="py-2.5 px-3 text-right code-font text-slate-900">${avgRes.toFixed(1)}</td>
+                <td class="py-2.5 px-3 text-center text-slate-800">${items[0].unit}</td>
+                <td class="py-2.5 px-3 text-right code-font text-slate-900">${avgRlu.toFixed(1)}</td>
+                <td class="py-2.5 px-3 text-center">
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-bold ${isPass ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                        ${isPass ? '在控PASS' : '不在控FAIL'}
+                    </span>
+                </td>
+                <td class="py-2.5 px-3 text-right code-font text-slate-400">-</td>
+                <td class="py-2.5 px-3 text-right code-font text-slate-400">-</td>
+            `;
+            tbody.appendChild(trAvg);
+            tabState.qc.parsedRows.push({
+                name: itemKey, rep: '平均Avg.', res: avgRes.toFixed(1), unit: items[0].unit,
+                rlu: avgRlu.toFixed(1), verdict: isPass ? '在控PASS' : '不在控FAIL',
+                target: '-', sd: '-', isAvg: true
+            });
+        });
+
+        document.getElementById('previewCardQc').classList.remove('hidden');
+    }
+
+    // 3. 樣本分析渲染
+    function renderSample(cleaned) {
+        const header = cleaned[0];
+        
+        let idIdx = findExactColIndex(header, '編號');
+        if (idIdx === -1) idIdx = findExactColIndex(header, '樣本編號');
+        if (idIdx === -1) idIdx = findColIndex(header, ['編號', '樣本編號', 'ID', 'Sample']);
+
+        const itemIdx = findColIndex(header, ['項目', '項目名稱', '檢驗項目']);
+        const resIdx = findColIndex(header, ['結果']);
+        const unitIdx = findColIndex(header, ['單位']);
+        const rluIdx = findColIndex(header, ['發光值']);
+        const rgtLotIdx = findColIndex(header, ['試劑批號']);
+
+        const firstData = cleaned[1] || [];
+        const rgtLot = rgtLotIdx !== -1 ? firstData[rgtLotIdx] : (cleaned.find(r => r[rgtLotIdx])?.[rgtLotIdx] || 'REA-2026');
+        const defaultUnit = unitIdx !== -1 ? firstData[unitIdx] : 'mIU/mL';
+        const defaultItem = itemIdx !== -1 ? firstData[itemIdx] : 'β-HCG';
+
+        tabState.sample.info = { reagent: rgtLot, time: tabState.sample.info.time || getNowFormatted() };
+        document.getElementById('infoReagentSample').textContent = rgtLot;
+        document.getElementById('infoTimeSample').textContent = tabState.sample.info.time;
+
+        const reps = getSelectedReps('sample');
+
+        const groups = {};
+        for (let r = 1; r < cleaned.length; r++) {
+            const row = cleaned[r];
+            const sampleId = idIdx !== -1 && row[idIdx] !== undefined && String(row[idIdx]).trim() !== '' 
+                             ? String(row[idIdx]).trim() 
+                             : `S-${Math.ceil(r/reps)}`;
+            const itName = itemIdx !== -1 && row[itemIdx] ? row[itemIdx] : defaultItem;
+            if (!groups[sampleId]) groups[sampleId] = { id: sampleId, item: itName, records: [] };
+            groups[sampleId].records.push({
+                res: typeof row[resIdx] === 'number' ? row[resIdx] : parseFloat(String(row[resIdx]).replace(/,/g, '')) || 0,
+                unit: unitIdx !== -1 && row[unitIdx] ? row[unitIdx] : defaultUnit,
+                rlu: typeof row[rluIdx] === 'number' ? row[rluIdx] : parseFloat(String(row[rluIdx]).replace(/,/g, '')) || 0
+            });
+        }
+
+        const sampleKeys = Object.keys(groups);
+        document.getElementById('infoCountSample').textContent = `${sampleKeys.length} 檢體`;
+
+        const tbody = document.getElementById('tableBodySample');
+        tbody.innerHTML = '';
+        tabState.sample.parsedRows = [];
+
+        sampleKeys.forEach(sId => {
+            const grp = groups[sId];
+            const items = grp.records.slice(0, reps);
+            let sumRes = 0, sumRlu = 0;
+
+            items.forEach((item, idx) => {
+                sumRes += item.res;
+                sumRlu += item.rlu;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-800 code-font">${idx === 0 ? sId : ''}</td>
+                    <td class="py-2.5 px-3 text-slate-700">${idx === 0 ? grp.item : ''}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-500 code-font">Rep ${idx + 1}</td>
+                    <td class="py-2.5 px-3 text-right code-font font-bold text-slate-900">${item.res.toFixed(1)}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-600">${item.unit}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-700">${Math.round(item.rlu).toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+                tabState.sample.parsedRows.push({
+                    id: sId, item: grp.item, rep: `Rep ${idx + 1}`, res: item.res.toFixed(1), unit: item.unit, rlu: Math.round(item.rlu)
+                });
+            });
+
+            if (items.length > 0) {
+                const avgRes = (sumRes / items.length).toFixed(1);
+                const avgRlu = (sumRlu / items.length).toFixed(1);
+                const trAvg = document.createElement('tr');
+                trAvg.className = "bg-slate-100 font-bold border-y border-slate-200";
+                trAvg.innerHTML = `
+                    <td class="py-2.5 px-3 text-slate-900 code-font">${sId}</td>
+                    <td class="py-2.5 px-3 text-slate-900">${grp.item}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-700">平均Avg.</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-900">${avgRes}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-800">${items[0].unit}</td>
+                    <td class="py-2.5 px-3 text-right code-font text-slate-900">${parseFloat(avgRlu).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                `;
+                tbody.appendChild(trAvg);
+                tabState.sample.parsedRows.push({
+                    id: sId, item: grp.item, rep: '平均Avg.', res: avgRes, unit: items[0].unit, rlu: avgRlu, isAvg: true
+                });
+            }
+        });
+
+        document.getElementById('previewCardSample').classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
