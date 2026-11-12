@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作液標籤產生系統</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .symbol-font {
+            font-family: 'Symbol', 'Noto Sans TC', sans-serif;
+        }
+        .brand-blue {
+            background-color: rgb(14, 57, 99);
+        }
+        .brand-blue-light {
+            background-color: rgb(20, 78, 134);
+        }
+        ::selection {
+            background-color: rgb(14, 57, 99);
+            color: white;
+        }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* 標籤小尺寸模式 (Eppendorf 2.6 x 1.5 cm：右上角縮小英文縮寫，第2行純中文品名+體積靠右，LOT/Conc 各佔一行) */
+        .label-sm {
+            padding: 8px 10px;
+        }
+        .label-sm .txt-part { font-size: 10px; white-space: nowrap; }
+        .label-sm .txt-short { font-size: 8.5px; white-space: nowrap; }
+        .label-sm .name-vol-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 6px;
+            margin: 2px 0;
+        }
+        .label-sm .txt-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .label-sm .txt-vol { font-size: 9px; white-space: nowrap; flex-shrink: 0; }
+        .label-sm .txt-meta { font-size: 9px; white-space: nowrap; }
+        .label-sm .mid-block {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .label-sm .conc-align {
+            text-align: left;
+        }
+
+        /* 標籤大尺寸模式 (離心管/血清瓶 7.5 x 2.5 cm：第2行純中文品名+體積靠右，第3行 LOT 與 Conc 寬敞並排) */
+        .label-lg {
+            padding: 14px 16px;
+        }
+        .label-lg .txt-part { font-size: 14px; white-space: nowrap; }
+        .label-lg .txt-short { font-size: 12px; padding: 2px 8px; border-radius: 4px; background-color: #eff6ff; white-space: nowrap; }
+        .label-lg .name-vol-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            margin: 6px 0;
+        }
+        .label-lg .txt-name { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .label-lg .txt-vol { font-size: 12.5px; white-space: nowrap; flex-shrink: 0; }
+        .label-lg .txt-meta { font-size: 12px; line-height: 1.45; white-space: nowrap; }
+        .label-lg .mid-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .label-lg .conc-align {
+            text-align: right;
+        }
+
+        /* 原生 A4 列印隔離與色彩強制保留 */
+        #printMountArea {
+            display: none;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0 !important;
+            }
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #printMountArea {
+                display: block !important;
+                width: 21.0cm;
+                margin: 0;
+                padding: 0;
+            }
+            .print-a4-page {
+                width: 21.0cm;
+                height: 29.7cm;
+                padding: 1.0cm;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: flex-start;
+                gap: 0.1cm; /* 列印標籤縱向間隔縮小為 1 mm */
+                page-break-after: always;
+                break-after: page;
+                background-color: #ffffff !important;
+            }
+            .print-a4-page:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+            .print-label-row {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 0.1cm; /* 列印標籤橫向間隔縮小為 1 mm */
+                width: 100%;
+            }
+            .print-label-card {
+                border: 1px solid rgb(230, 230, 230) !important;
+                background-color: #ffffff !important;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+                flex-shrink: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 小尺寸 (Eppendorf 2.6 x 1.5 cm)：第2行純中文+體積靠右，LOT/Conc 各佔一行，底列完整 EXP 日期 */
+            .print-label-card.p-sm {
+                padding: 0.7mm 1.0mm;
+            }
+            .print-label-card.p-sm .p-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 1mm;
+                border-bottom: 0.4pt solid #e2e8f0;
+                padding-bottom: 0.3mm;
+                line-height: 1;
+                white-space: nowrap;
+            }
+            .print-label-card.p-sm .p-part { font-size: 5.0pt; white-space: nowrap; }
+            .print-label-card.p-sm .p-short { font-size: 4.3pt; white-space: nowrap; letter-spacing: -0.02em; }
+            .print-label-card.p-sm .p-name-vol {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 0.8mm;
+                line-height: 1.1;
+            }
+            .print-label-card.p-sm .p-name {
+                font-size: 5.4pt;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .print-label-card.p-sm .p-vol {
+                font-size: 4.3pt;
+                white-space: nowrap;
+                flex-shrink: 0;
+                letter-spacing: -0.02em;
+            }
+            .print-label-card.p-sm .p-mid-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25mm;
+                line-height: 1.05;
+            }
+            .print-label-card.p-sm .p-meta {
+                font-size: 4.6pt;
+                letter-spacing: -0.01em;
+                white-space: nowrap;
+                line-height: 1.05;
+            }
+            .print-label-card.p-sm .p-bottom {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 0.4pt solid #e2e8f0;
+                padding-top: 0.3mm;
+                font-size: 4.0pt;
+                letter-spacing: -0.02em;
+                white-space: nowrap;
+                line-height: 1.05;
+            }
+
+            /* 大尺寸 (離心管/血清瓶 7.5 x 2.5 cm)：第2行純中文+體積靠右，第3行 LOT 與 Conc 寬敞左右對齊 */
+            .print-label-card.p-lg {
+                padding: 2.5mm 3.2mm;
+            }
+            .print-label-card.p-lg .p-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 0.5pt solid #f1f5f9;
+                padding-bottom: 0.5mm;
+                line-height: 1;
+                white-space: nowrap;
+            }
+            .print-label-card.p-lg .p-part { font-size: 10pt; white-space: nowrap; }
+            .print-label-card.p-lg .p-short { font-size: 9pt; padding: 0.5mm 1.5mm; background-color: #eff6ff !important; border-radius: 1mm; white-space: nowrap; }
+            .print-label-card.p-lg .p-name-vol {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 2mm;
+                line-height: 1.2;
+            }
+            .print-label-card.p-lg .p-name {
+                font-size: 11.5pt;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .print-label-card.p-lg .p-vol {
+                font-size: 8.8pt;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .print-label-card.p-lg .p-mid-wrap {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 3mm;
+                line-height: 1.1;
+            }
+            .print-label-card.p-lg .p-conc-cell {
+                text-align: right;
+            }
+            .print-label-card.p-lg .p-meta { font-size: 8.5pt; white-space: nowrap; }
+            .print-label-card.p-lg .p-bottom {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 0.5pt solid #f1f5f9;
+                padding-top: 0.5mm;
+                font-size: 8.5pt;
+                white-space: nowrap;
+                line-height: 1.1;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-16 text-base">
+
+    <!-- 頂部深藍導覽列 (RGB 14, 57, 99) -->
+    <header class="brand-blue text-white shadow-lg mb-8 relative overflow-hidden no-print">
+        <div class="absolute inset-0 opacity-[0.06] pointer-events-none"
+             style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;">
+        </div>
+        <div class="max-w-7xl mx-auto px-6 py-5 relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl brand-blue-light flex items-center justify-center text-xl shrink-0 ring-1 ring-white/20 shadow-inner">
+                        🏷️
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
+                            工作液標籤產生器
+                        </h1>
+                        <p class="text-xs md:text-sm text-slate-300 mt-0.5 font-medium tracking-wide">
+                            Working Solution Label Generator
+                        </p>
+                    </div>
+                </div>
+
+                <a href="index.html"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                          bg-white/10 border border-white/30 text-white
+                          hover:bg-white hover:text-[rgb(14,57,99)]
+                          hover:border-white transition-all duration-150
+                          shadow-sm font-medium text-sm tracking-wide whitespace-nowrap">
+                    🏠 回到主控台首頁
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主工作區 -->
+    <main class="max-w-7xl mx-auto px-4 no-print">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- 左側編輯表單與多品項佇列區 (7 欄寬) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- 卡片 1：品項規格與資訊填寫表單 (每個品項獨立綁定專屬尺寸與體積) -->
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-blue-50 text-[rgb(14,57,99)] flex items-center justify-center text-sm font-bold">1</span>
+                            品項規格與資訊填寫表單
+                        </h2>
+                        <button id="btnResetInputs" type="button" class="text-xs font-semibold text-slate-500 hover:text-[rgb(14,57,99)] transition-colors cursor-pointer">
+                            ↺ 重置欄位
+                        </button>
+                    </div>
+
+                    <!-- 容器預設規格與該品項獨立長寬尺寸 -->
+                    <div class="p-4 bg-slate-50/80 rounded-xl border border-slate-200/70 space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                    容器預設規格
+                                </label>
+                                <select id="presetSelect" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all cursor-pointer">
+                                    <option value="eppendorf">Eppendorf 管</option>
+                                    <option value="centrifuge" selected>離心管/血清瓶</option>
+                                    <option value="custom">自訂尺寸</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 md:col-span-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                        標籤長度 (cm)
+                                    </label>
+                                    <input type="number" id="labelLength" value="7.5" step="0.1" min="0.5" max="19"
+                                           class="w-full min-w-0 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all"
+                                           inputmode="decimal">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                        標籤寬度 (cm)
+                                    </label>
+                                    <input type="number" id="labelWidth" value="2.5" step="0.1" min="0.5" max="27"
+                                           class="w-full min-w-0 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all"
+                                           inputmode="decimal">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 pt-1">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full border border-slate-300" style="background-color: rgb(230,230,230)"></span>
+                                裁切定位外框色：<code class="code-font text-slate-700 font-bold">RGB(230, 230, 230)</code>
+                            </span>
+                            <span class="text-slate-400">標籤列印間隔 1 mm｜不同品項自動換行共印</span>
+                        </div>
+                    </div>
+
+                    <!-- 品項、料號與體積設定 -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide">品項與料號設定</label>
+                            <div class="flex items-center gap-4 text-xs font-semibold text-slate-600">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="itemMode" value="preset" checked class="accent-[rgb(14,57,99)]">
+                                    <span>常用清單選取</span>
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="itemMode" value="custom" class="accent-[rgb(14,57,99)]">
+                                    <span>自行填入</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="presetDropdownContainer" class="mb-3">
+                            <select id="itemSelect" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all cursor-pointer">
+                                <option value="3AHCG10B" data-name="蛋白母液 Primary Prot-soln." data-type="prot" data-unit="IU/mL">蛋白母液 Primary Prot-soln. (3AHCG10B)</option>
+                                <option value="3AHCG13B" data-name="校正液C1工作液 CWS-1" data-type="cws" data-unit="mIU/mL" selected>校正液C1工作液 CWS-1 (3AHCG13B)</option>
+                                <option value="3AHCG14B" data-name="校正液C2工作液 CWS-2" data-type="cws" data-unit="mIU/mL">校正液C2工作液 CWS-2 (3AHCG14B)</option>
+                                <option value="3AHCG15B" data-name="校正液C3工作液 CWS-3" data-type="cws" data-unit="mIU/mL">校正液C3工作液 CWS-3 (3AHCG15B)</option>
+                                <option value="3AHCG16B" data-name="高濃度品管液工作液 QWS-CH" data-type="qws" data-unit="mIU/mL">高濃度品管液工作液 QWS-CH (3AHCG16B)</option>
+                                <option value="3AHCG17B" data-name="低濃度品管液工作液 QWS-CL" data-type="qws" data-unit="mIU/mL">低濃度品管液工作液 QWS-CL (3AHCG17B)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-5 min-w-0">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">品項名稱 (Item Name) <span class="text-rose-500">*</span></label>
+                                <input type="text" id="itemName" value="校正液C1工作液 CWS-1"
+                                       class="w-full min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all">
+                            </div>
+                            <div class="md:col-span-4 min-w-0">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">產品料號 (Part No.) <span class="text-rose-500">*</span></label>
+                                <input type="text" id="partNo" value="3AHCG13B"
+                                       class="w-full min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all">
+                            </div>
+                            <div class="md:col-span-3 min-w-0">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">分裝體積 (Vol.) <span class="text-rose-500">*</span></label>
+                                <div class="relative flex items-center w-full min-w-0">
+                                    <input type="number" id="volValue" value="30" step="any" min="0.001" placeholder="體積"
+                                           class="w-full min-w-0 pl-3 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all"
+                                           inputmode="decimal">
+                                    <span class="absolute right-3 text-xs font-bold text-slate-400 code-font pointer-events-none">mL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 批號與賦值濃度 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="min-w-0">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                工單批號 (Lot No.) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="lotNo" value="" placeholder="請填入工單批號"
+                                   class="w-full min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all">
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 truncate">
+                                賦值濃度 (Conc.) <span class="text-slate-400 font-normal">(選填，留空保留劃線)</span>
+                            </label>
+                            <div class="flex items-center gap-2 w-full min-w-0">
+                                <input type="number" id="concValue" step="any" placeholder="留空印出底線"
+                                       class="flex-1 min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all"
+                                       inputmode="decimal">
+                                <select id="concUnit" class="w-24 shrink-0 px-2.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all cursor-pointer">
+                                    <option value="mIU/mL">mIU/mL</option>
+                                    <option value="IU/mL">IU/mL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 日期填寫與 SOP 判定防呆 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="min-w-0">
+                            <label id="dateLabel" class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                配製日期 (Preparation Date) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" id="prepDate"
+                                   class="w-full min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all cursor-pointer">
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                保存效期 (Exp. Date) <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" id="expDate"
+                                   class="w-full min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- 效期防呆錯誤提示條 -->
+                    <div id="dateAlertBox" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2">
+                        <span class="text-sm">⚠️</span>
+                        <span id="dateAlertMsg">保存效期超出 SOP 規定上限！</span>
+                    </div>
+
+                    <!-- 該品項列印張數與加入按鈕 -->
+                    <div class="pt-2 flex flex-col sm:flex-row sm:items-end gap-4">
+                        <div class="sm:w-44 shrink-0">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                                該品項張數 (Qty) <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="printQty" value="6" min="1" max="500" step="1"
+                                       class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold text-slate-800 code-font focus:outline-none focus:bg-white focus:border-[rgb(14,57,99)] focus:ring-2 focus:ring-[rgb(14,57,99)]/20 transition-all"
+                                       inputmode="numeric">
+                                <span class="text-xs font-bold text-slate-500 shrink-0">張</span>
+                            </div>
+                        </div>
+                        <button id="btnAddToQueue" type="button"
+                                class="flex-1 py-3 px-4 brand-blue hover:brightness-110 text-white font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-sm">
+                            <span>➕</span>
+                            <span>加入待印標籤清單</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 卡片 2：待列印標籤清單佇列 (Multi-Item Queue) -->
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">2</span>
+                            待列印標籤清單佇列
+                            <span id="queueSummaryBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 code-font">
+                                0 種品項 / 0 張
+                            </span>
+                        </h2>
+                        <button id="btnClearQueue" type="button"
+                                class="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer hidden">
+                            🗑️ 清空所有清單
+                        </button>
+                    </div>
+
+                    <!-- 清單列表容器 -->
+                    <div id="queueListContainer" class="space-y-2.5">
+                        <!-- 空狀態預設顯示 -->
+                        <div id="emptyQueuePlaceholder" class="py-8 px-4 border-2 border-dashed border-slate-200 rounded-xl text-center space-y-1.5">
+                            <p class="text-sm font-bold text-slate-500">目前待印清單尚無任何品項</p>
+                            <p class="text-xs text-slate-400">請於上方設定容器規格並填寫品項、體積與工單批號後，點擊「➕ 加入待印標籤清單」；不同品項於列印時將自動換行排列。</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- 右側即時預覽與列印控制區 (5 欄寬，Sticky 隨捲動固定) -->
+            <div class="lg:col-span-5 lg:sticky lg:top-6 space-y-6">
+                
+                <!-- 卡片 3：單張細節檢視與 A4 排列即時模擬 -->
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">3</span>
+                            即時預覽與 A4 列印控制
+                        </h2>
+                        <span id="a4PageStatsBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded bg-blue-50 text-[rgb(14,57,99)] code-font whitespace-nowrap">
+                            共 1 頁 A4
+                        </span>
+                    </div>
+
+                    <!-- 第一層：單張標籤細節檢視畫布 -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                ① 單張標籤細節檢視
+                                <span id="detailSourceBadge" class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 normal-case">
+                                    編輯中預覽
+                                </span>
+                            </span>
+                            <span id="previewDimensionTag" class="text-[11px] text-slate-500 font-semibold code-font">7.5 × 2.5 cm</span>
+                        </div>
+                        <div class="bg-slate-100/80 p-4 rounded-xl border border-slate-200/70 flex flex-col items-center justify-center min-h-[165px] overflow-auto">
+                            <div id="previewCard" 
+                                 style="border-color: rgb(230, 230, 230); border-width: 1px; border-style: solid; background-color: #ffffff;"
+                                 class="label-lg rounded-sm shadow-sm transition-all duration-200 flex flex-col justify-between overflow-hidden">
+                                <!-- 頂列：料號與縮小英文縮寫 -->
+                                <div class="flex justify-between items-baseline gap-2 leading-none border-b border-slate-100 pb-1">
+                                    <span id="pvPartNo" class="code-font font-bold text-slate-800 txt-part tracking-tight">3AHCG13B</span>
+                                    <span id="pvShortTag" class="font-bold text-[rgb(14,57,99)] txt-short code-font">CWS-1</span>
+                                </div>
+                                
+                                <!-- 第2行：純中文品名 (左) + 體積靠右 (右) -->
+                                <div class="name-vol-row leading-snug">
+                                    <div id="pvItemName" class="font-bold text-slate-900 txt-name">
+                                        校正液C1工作液
+                                    </div>
+                                    <div class="txt-vol code-font text-slate-700">
+                                        <span class="text-slate-400">Vol:</span> <strong id="pvVol" class="text-slate-800">30 mL</strong>
+                                    </div>
+                                </div>
+
+                                <!-- 第3行：批號與濃度 -->
+                                <div class="mid-block txt-meta leading-tight text-slate-700 code-font">
+                                    <div class="truncate"><span class="text-slate-400">LOT:</span> <span id="pvLotNo" class="font-semibold text-slate-400">未填入工單批號</span></div>
+                                    <div class="conc-align truncate"><span class="text-slate-400">Conc:</span> <span id="pvConc" class="font-semibold">______ mIU/mL</span></div>
+                                </div>
+
+                                <!-- 底列：日期與效期 -->
+                                <div class="flex justify-between items-center gap-2 txt-meta leading-tight text-slate-700 code-font pt-1 border-t border-slate-100">
+                                    <div><span class="text-slate-400" id="pvDatePrefix">DATE:</span> <span id="pvPrepDate" class="font-semibold">YYYY-MM-DD</span></div>
+                                    <div class="text-right"><span class="text-slate-400">EXP:</span> <span id="pvExpDate" class="font-bold text-slate-900">YYYY-MM-DD</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第二層：A4 紙張排列即時模擬 (間隔 1 mm = 1px，不同品項自動換行) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">② A4 紙張排列即時模擬 (21.0 × 29.7 cm)</span>
+                            <span id="a4LayoutModeBadge" class="text-[11px] text-slate-500 font-semibold code-font">間隔 1mm｜自動換行</span>
+                        </div>
+                        <div class="bg-slate-200/70 p-4 rounded-xl border border-slate-300/70 flex flex-col items-center justify-center">
+                            <!-- 多頁切換控制列 (超過 1 頁時自動顯示) -->
+                            <div id="pageNavBar" class="hidden w-full max-w-[210px] flex items-center justify-between mb-2 text-xs font-bold text-slate-600">
+                                <button id="btnPrevPage" type="button" class="px-2 py-0.5 bg-white rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 cursor-pointer">◀ 上一頁</button>
+                                <span id="pageIndicatorText" class="code-font">第 1 / 1 頁</span>
+                                <button id="btnNextPage" type="button" class="px-2 py-0.5 bg-white rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40 cursor-pointer">下一頁 ▶</button>
+                            </div>
+
+                            <!-- A4 比例縮圖紙張 (1cm = 10px -> 210x297px, 留白 1cm = 10px, 間隔 1mm = 1px) -->
+                            <div id="a4SheetSimulator" class="bg-white shadow-md border border-slate-300 relative overflow-hidden" style="width: 210px; height: 297px; padding: 10px;">
+                                <div id="a4MiniFlowContainer" class="w-full h-full flex flex-col items-start justify-start" style="gap: 1px;">
+                                    <!-- 動態填入逐列換行排列之多尺寸迷你標籤方塊 -->
+                                </div>
+                            </div>
+
+                            <!-- 品項色標與尺寸圖例 -->
+                            <div id="a4LegendContainer" class="flex flex-wrap items-center justify-center gap-1.5 mt-2.5 max-w-full"></div>
+
+                            <p id="a4OverflowNote" class="text-[11px] text-slate-500 mt-1.5 code-font text-center">
+                                加入品項後將依各自尺寸排列，間隔 1 mm 且不同品項自動換行
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 列印控制按鈕 -->
+                    <div class="pt-1">
+                        <button id="btnPrintA4" type="button" disabled
+                                class="w-full py-3.5 brand-blue hover:brightness-110 disabled:opacity-45 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-base">
+                            <span>🖨️</span>
+                            <span id="btnPrintText">列印 A4 標籤 (請先加入品項)</span>
+                        </button>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 原生列印專用掛載容器 (僅在 @media print 顯示) -->
+    <div id="printMountArea"></div>
+
+    <!-- 邏輯引擎腳本 -->
+    <script>
+        // 預設料號品項對照表：
+        // - 蛋白母液：Eppendorf 管 (2.6x1.5 cm)，預設體積 0.05 mL
+        // - 校正液工作液 (CWS-1~3)：離心管/血清瓶 (7.5x2.5 cm)，預設體積 30 mL
+        // - 品管液工作液 (QWS-CH/CL)：離心管/血清瓶 (7.5x2.5 cm)，預設體積 54 mL
+        const ITEM_DATABASE = {
+            "3AHCG10B": { name: "蛋白母液 Primary Prot-soln.", type: "prot", unit: "IU/mL", short: "Primary Prot-soln.", defaultPreset: "eppendorf", defaultVol: "0.05" },
+            "3AHCG13B": { name: "校正液C1工作液 CWS-1", type: "cws", unit: "mIU/mL", short: "CWS-1", defaultPreset: "centrifuge", defaultVol: "30" },
+            "3AHCG14B": { name: "校正液C2工作液 CWS-2", type: "cws", unit: "mIU/mL", short: "CWS-2", defaultPreset: "centrifuge", defaultVol: "30" },
+            "3AHCG15B": { name: "校正液C3工作液 CWS-3", type: "cws", unit: "mIU/mL", short: "CWS-3", defaultPreset: "centrifuge", defaultVol: "30" },
+            "3AHCG16B": { name: "高濃度品管液工作液 QWS-CH", type: "qws", unit: "mIU/mL", short: "QWS-CH", defaultPreset: "centrifuge", defaultVol: "54" },
+            "3AHCG17B": { name: "低濃度品管液工作液 QWS-CL", type: "qws", unit: "mIU/mL", short: "QWS-CL", defaultPreset: "centrifuge", defaultVol: "54" }
+        };
+
+        // 多品項 A4 模擬區微色標調色盤 (僅供畫面辨識不同品項區塊，實際列印維持純白底與 RGB(230,230,230) 外框)
+        const QUEUE_PALETTE = [
+            { bg: "#eff6ff", text: "#1e40af", dot: "#2563eb" },
+            { bg: "#ecfdf5", text: "#065f46", dot: "#059669" },
+            { bg: "#fef3c7", text: "#92400e", dot: "#d97706" },
+            { bg: "#f3e8ff", text: "#6b21a8", dot: "#9333ea" },
+            { bg: "#ffe4e6", text: "#9f1239", dot: "#e11d48" },
+            { bg: "#e0f2fe", text: "#075985", dot: "#0284c7" }
+        ];
+
+        // A4 物理規格常數 (cm)
+        const A4_WIDTH_CM = 21.0;
+        const A4_HEIGHT_CM = 29.7;
+        const A4_MARGIN_CM = 1.0; // 四周留白 1.0 cm -> 有效寬度 19.0 cm, 有效高度 27.7 cm
+        const LABEL_GAP_CM = 0.1; // 標籤之間橫向與縱向間距縮小為 1 mm (0.1 cm)
+
+        // 多品項待印佇列狀態 (每筆獨立保存 lengthCm, widthCm, volText)
+        let printQueue = [];
+        let selectedQueueId = null;
+        let currentSimPage = 1;
+
+        // DOM 元素快取
+        const presetSelect = document.getElementById('presetSelect');
+        const labelLength = document.getElementById('labelLength');
+        const labelWidth = document.getElementById('labelWidth');
+
+        const itemModeRadios = document.querySelectorAll('input[name="itemMode"]');
+        const presetDropdownContainer = document.getElementById('presetDropdownContainer');
+        const itemSelect = document.getElementById('itemSelect');
+        const itemName = document.getElementById('itemName');
+        const partNo = document.getElementById('partNo');
+        const volValue = document.getElementById('volValue');
+        const lotNo = document.getElementById('lotNo');
+        const concValue = document.getElementById('concValue');
+        const concUnit = document.getElementById('concUnit');
+        const prepDate = document.getElementById('prepDate');
+        const expDate = document.getElementById('expDate');
+        const printQty = document.getElementById('printQty');
+        const dateLabel = document.getElementById('dateLabel');
+        const dateAlertBox = document.getElementById('dateAlertBox');
+        const dateAlertMsg = document.getElementById('dateAlertMsg');
+        const btnAddToQueue = document.getElementById('btnAddToQueue');
+        const btnResetInputs = document.getElementById('btnResetInputs');
+
+        // 佇列與預覽元素快取
+        const queueSummaryBadge = document.getElementById('queueSummaryBadge');
+        const btnClearQueue = document.getElementById('btnClearQueue');
+        const queueListContainer = document.getElementById('queueListContainer');
+        const emptyQueuePlaceholder = document.getElementById('emptyQueuePlaceholder');
+
+        const detailSourceBadge = document.getElementById('detailSourceBadge');
+        const previewCard = document.getElementById('previewCard');
+        const pvPartNo = document.getElementById('pvPartNo');
+        const pvShortTag = document.getElementById('pvShortTag');
+        const pvItemName = document.getElementById('pvItemName');
+        const pvLotNo = document.getElementById('pvLotNo');
+        const pvVol = document.getElementById('pvVol');
+        const pvConc = document.getElementById('pvConc');
+        const pvDatePrefix = document.getElementById('pvDatePrefix');
+        const pvPrepDate = document.getElementById('pvPrepDate');
+        const pvExpDate = document.getElementById('pvExpDate');
+        const previewDimensionTag = document.getElementById('previewDimensionTag');
+
+        const a4PageStatsBadge = document.getElementById('a4PageStatsBadge');
+        const pageNavBar = document.getElementById('pageNavBar');
+        const btnPrevPage = document.getElementById('btnPrevPage');
+        const btnNextPage = document.getElementById('btnNextPage');
+        const pageIndicatorText = document.getElementById('pageIndicatorText');
+        const a4MiniFlowContainer = document.getElementById('a4MiniFlowContainer');
+        const a4LegendContainer = document.getElementById('a4LegendContainer');
+        const a4OverflowNote = document.getElementById('a4OverflowNote');
+        const btnPrintA4 = document.getElementById('btnPrintA4');
+        const btnPrintText = document.getElementById('btnPrintText');
+        const printMountArea = document.getElementById('printMountArea');
+
+        // 工具函式：HTML 跳脫防呆
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatDateYMD(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        // 抽取英文縮寫與純中文品名（無論 Eppendorf 管或離心管/血清瓶皆省略品名後方重複英文縮寫）
+        function parseItemDisplayTexts(fullNameStr, partStr) {
+            const trimmed = (fullNameStr || "").trim();
+            const matchShort = trimmed.match(/(Primary\s+Prot-soln\.?|Prot-soln\.?|CWS-[123]|QWS-C[HL])/i);
+            let shortTag = "";
+            if (matchShort) {
+                shortTag = matchShort[0];
+            } else if (ITEM_DATABASE[partStr]) {
+                shortTag = ITEM_DATABASE[partStr].short;
+            } else {
+                const engMatch = trimmed.match(/[A-Za-z0-9][A-Za-z0-9\s\-\.]*$/);
+                shortTag = engMatch ? engMatch[0].trim() : (partStr || "LBL");
+            }
+
+            let chineseOnlyName = trimmed
+                .replace(/\s*(Primary\s+Prot-soln\.?|Prot-soln\.?|CWS-[123]|QWS-C[HL])\s*$/i, '')
+                .trim();
+            if (!chineseOnlyName) {
+                chineseOnlyName = trimmed || "請輸入產品品名";
+            }
+
+            return {
+                fullName: trimmed || "請輸入產品品名",
+                chineseOnlyName: chineseOnlyName,
+                shortTag: shortTag
+            };
+        }
+
+        // 初始化日期為系統今日時間
+        function initDefaultDates() {
+            const todayStr = formatDateYMD(new Date());
+            prepDate.value = todayStr;
+            applySmartExpiration(todayStr);
+        }
+
+        function getCurrentItemInfo() {
+            const currentName = itemName.value.trim();
+            const currentPart = partNo.value.trim();
+            const isProt = currentName.includes("母液") || currentName.toLowerCase().includes("prot") || currentPart === "3AHCG10B";
+            return { isProt };
+        }
+
+        // 依據品項種類智能計算並建議保存效期
+        function applySmartExpiration(baseDateStr) {
+            if (!baseDateStr) return;
+            const { isProt } = getCurrentItemInfo();
+            const d = new Date(baseDateStr);
+
+            if (d instanceof Date && !isNaN(d)) {
+                if (isProt) {
+                    const target = new Date(d);
+                    target.setFullYear(target.getFullYear() + 2);
+                    expDate.value = formatDateYMD(target);
+                } else {
+                    const target = new Date(d.getTime() + 3 * 24 * 60 * 60 * 1000);
+                    expDate.value = formatDateYMD(target);
+                }
+            }
+            validateExpiration();
+        }
+
+        // SOP 效期規則檢核 (違規則反紅並鎖定加入清單按鈕)
+        function validateExpiration() {
+            const pVal = prepDate.value;
+            const eVal = expDate.value;
+            const { isProt } = getCurrentItemInfo();
+
+            dateLabel.innerHTML = isProt 
+                ? '分裝日期 (Aliquot Date) <span class="text-rose-500">*</span>' 
+                : '配製日期 (Preparation Date) <span class="text-rose-500">*</span>';
+
+            if (!pVal || !eVal) {
+                setValidityState(true);
+                return true;
+            }
+
+            const pDate = new Date(pVal);
+            const eDate = new Date(eVal);
+
+            if (eDate < pDate) {
+                setValidityState(false, "保存效期不可早於配製/分裝日期！");
+                return false;
+            }
+
+            if (isProt) {
+                const maxProt = new Date(pDate);
+                maxProt.setFullYear(maxProt.getFullYear() + 2);
+                if (eDate > maxProt) {
+                    setValidityState(false, `蛋白母液保存效期超出 SOP 上限（不得晚於 ${formatDateYMD(maxProt)}）！`);
+                    return false;
+                }
+            } else {
+                const maxWork = new Date(pDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+                if (eDate > maxWork) {
+                    setValidityState(false, `工作液保存效期超出 SOP 上限（不得晚於 ${formatDateYMD(maxWork)}）！`);
+                    return false;
+                }
+            }
+
+            setValidityState(true);
+            return true;
+        }
+
+        function setValidityState(isValid, message = "") {
+            if (isValid) {
+                expDate.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-700', 'ring-2', 'ring-rose-500/20');
+                dateAlertBox.classList.add('hidden');
+                btnAddToQueue.removeAttribute('disabled');
+                btnAddToQueue.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                expDate.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-700', 'ring-2', 'ring-rose-500/20');
+                dateAlertMsg.textContent = message;
+                dateAlertBox.classList.remove('hidden');
+                btnAddToQueue.setAttribute('disabled', 'true');
+                btnAddToQueue.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // 取得當前表單品項物件
+        function readDraftFormData() {
+            const lengthCm = Math.min(Math.max(parseFloat(labelLength.value) || 2.6, 0.5), 19.0);
+            const widthCm = Math.min(Math.max(parseFloat(labelWidth.value) || 1.5, 0.5), 27.0);
+
+            const nameStr = itemName.value.trim();
+            const partStr = partNo.value.trim();
+            const parsedTexts = parseItemDisplayTexts(nameStr, partStr);
+
+            const vRaw = volValue.value.trim();
+            const volText = vRaw === "" ? "____ mL" : `${parseFloat(vRaw)} mL`;
+
+            const cVal = concValue.value.trim();
+            const cUnit = concUnit.value;
+            const concText = cVal === "" ? `______ ${cUnit}` : `${parseFloat(cVal)} ${cUnit}`;
+
+            return {
+                itemName: parsedTexts.fullName,
+                chineseOnlyName: parsedTexts.chineseOnlyName,
+                partNo: partStr || "—",
+                shortTag: parsedTexts.shortTag,
+                volRaw: vRaw,
+                volText: volText,
+                lotNo: lotNo.value.trim(),
+                concValue: cVal,
+                concUnit: cUnit,
+                concText: concText,
+                prepDate: prepDate.value || "YYYY-MM-DD",
+                expDate: expDate.value || "YYYY-MM-DD",
+                qty: Math.max(parseInt(printQty.value) || 1, 1),
+                lengthCm: lengthCm,
+                widthCm: widthCm
+            };
+        }
+
+        // 加入待印標籤清單佇列
+        btnAddToQueue.addEventListener('click', () => {
+            if (!itemName.value.trim()) {
+                alert("請填入品項名稱！");
+                itemName.focus();
+                return;
+            }
+            if (!partNo.value.trim()) {
+                alert("請填入產品料號！");
+                partNo.focus();
+                return;
+            }
+            const vNum = parseFloat(volValue.value);
+            if (isNaN(vNum) || vNum <= 0) {
+                alert("請填入有效的分裝體積 (mL)！");
+                volValue.focus();
+                return;
+            }
+            if (!lotNo.value.trim()) {
+                alert("請填入工單批號！");
+                lotNo.focus();
+                return;
+            }
+            if (!validateExpiration()) {
+                alert("保存效期超出 SOP 規定上限，請修正後再加入清單！");
+                return;
+            }
+
+            const rawLen = parseFloat(labelLength.value);
+            const rawWid = parseFloat(labelWidth.value);
+            if (isNaN(rawLen) || isNaN(rawWid) || rawLen < 0.5 || rawWid < 0.5 || rawLen > 19.0 || rawWid > 27.0) {
+                alert("標籤尺寸須在 A4 有效範圍內（長度 0.5~19.0 cm，寬度 0.5~27.0 cm）！");
+                return;
+            }
+
+            const draft = readDraftFormData();
+            const newId = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            const palette = QUEUE_PALETTE[printQueue.length % QUEUE_PALETTE.length];
+
+            printQueue.push({
+                id: newId,
+                ...draft,
+                color: palette
+            });
+
+            selectedQueueId = newId;
+            const pages = buildA4RowBreakPages(printQueue, false);
+            currentSimPage = Math.max(1, pages.length);
+
+            renderQueueList();
+            updateAllPreviews();
+        });
+
+        // 清空所有佇列
+        btnClearQueue.addEventListener('click', () => {
+            if (confirm("確定要清空所有待列印標籤清單嗎？")) {
+                printQueue = [];
+                selectedQueueId = null;
+                currentSimPage = 1;
+                renderQueueList();
+                updateAllPreviews();
+            }
+        });
+
+        // 渲染待印清單佇列卡片
+        function renderQueueList() {
+            const totalItems = printQueue.length;
+            const totalLabels = getTotalLabelsCount();
+
+            queueSummaryBadge.textContent = `${totalItems} 種品項 / 共 ${totalLabels} 張`;
+
+            if (totalItems === 0) {
+                btnClearQueue.classList.add('hidden');
+                queueListContainer.innerHTML = '';
+                queueListContainer.appendChild(emptyQueuePlaceholder);
+                emptyQueuePlaceholder.classList.remove('hidden');
+                btnPrintA4.setAttribute('disabled', 'true');
+                btnPrintText.textContent = '列印 A4 標籤 (請先加入品項)';
+                return;
+            }
+
+            btnClearQueue.classList.remove('hidden');
+            btnPrintA4.removeAttribute('disabled');
+            btnPrintText.textContent = `執行 A4 列印 (共 ${totalItems} 種品項 / ${totalLabels} 張)`;
+
+            let html = '';
+            printQueue.forEach((item, index) => {
+                const isSelected = item.id === selectedQueueId;
+                const activeRing = isSelected
+                    ? 'border-[rgb(14,57,99)] ring-2 ring-[rgb(14,57,99)]/15 bg-blue-50/30'
+                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/60';
+
+                html += `
+                    <div data-id="${item.id}" class="queue-row p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${activeRing}">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <span class="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 code-font"
+                                  style="background-color: ${item.color.bg}; color: ${item.color.text}; border: 1px solid ${item.color.dot}40;">
+                                ${index + 1}
+                            </span>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-bold text-sm text-slate-900 truncate">${escapeHtml(item.chineseOnlyName)}</span>
+                                    <span class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700 code-font">${escapeHtml(item.partNo)}</span>
+                                    <span class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70 code-font">${item.lengthCm.toFixed(1)}×${item.widthCm.toFixed(1)}cm</span>
+                                </div>
+                                <div class="text-xs text-slate-500 code-font mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                    <span>LOT: <strong class="text-slate-700">${escapeHtml(item.lotNo)}</strong></span>
+                                    <span>Vol: <strong class="text-slate-700">${escapeHtml(item.volText)}</strong></span>
+                                    <span>Conc: ${escapeHtml(item.concText)}</span>
+                                    <span>EXP: <strong class="text-slate-700">${escapeHtml(item.expDate)}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2 shrink-0" onclick="event.stopPropagation()">
+                            <div class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
+                                <button type="button" data-action="dec" data-id="${item.id}" class="px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">−</button>
+                                <input type="number" data-action="qty" data-id="${item.id}" value="${item.qty}" min="1" max="500"
+                                       class="w-12 text-center text-xs font-bold code-font text-slate-800 focus:outline-none" inputmode="numeric">
+                                <button type="button" data-action="inc" data-id="${item.id}" class="px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">＋</button>
+                            </div>
+                            <button type="button" data-action="del" data-id="${item.id}" title="移除此品項"
+                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer text-xs font-bold">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            queueListContainer.innerHTML = html;
+
+            queueListContainer.querySelectorAll('.queue-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    selectedQueueId = row.dataset.id;
+                    renderQueueList();
+                    updateSingleDetailPreview();
+                });
+            });
+
+            queueListContainer.querySelectorAll('button[data-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const action = btn.dataset.action;
+                    const target = printQueue.find(x => x.id === id);
+                    if (!target) return;
+
+                    if (action === 'dec' && target.qty > 1) {
+                        target.qty -= 1;
+                    } else if (action === 'inc') {
+                        target.qty += 1;
+                    } else if (action === 'del') {
+                        printQueue = printQueue.filter(x => x.id !== id);
+                        if (selectedQueueId === id) {
+                            selectedQueueId = printQueue.length > 0 ? printQueue[printQueue.length - 1].id : null;
+                        }
+                    }
+                    renderQueueList();
+                    updateAllPreviews();
+                });
+            });
+
+            queueListContainer.querySelectorAll('input[data-action="qty"]').forEach(inp => {
+                inp.addEventListener('change', () => {
+                    const id = inp.dataset.id;
+                    const target = printQueue.find(x => x.id === id);
+                    if (target) {
+                        target.qty = Math.max(1, Math.min(500, parseInt(inp.value) || 1));
+                        renderQueueList();
+                        updateAllPreviews();
+                    }
+                });
+            });
+        }
+
+        function getTotalLabelsCount() {
+            return printQueue.reduce((sum, item) => sum + item.qty, 0);
+        }
+
+        /**
+         * 核心演算法：品項自動換行 + 多尺寸混合 A4 分頁引擎 (標籤間隔 1 mm = 0.1 cm)
+         */
+        function buildA4RowBreakPages(itemsList, isDraftMode = false) {
+            const usableW = A4_WIDTH_CM - 2 * A4_MARGIN_CM; // 19.0 cm
+            const usableH = A4_HEIGHT_CM - 2 * A4_MARGIN_CM; // 27.7 cm
+
+            const pages = [];
+            let currentPageRows = [];
+            let currentUsedHeightCm = 0;
+
+            itemsList.forEach((item, itemIdx) => {
+                const len = item.lengthCm;
+                const wid = item.widthCm;
+                const colsForThisItem = Math.max(1, Math.floor((usableW + LABEL_GAP_CM) / (len + LABEL_GAP_CM)));
+
+                let remaining = item.qty;
+                while (remaining > 0) {
+                    const countInThisRow = Math.min(remaining, colsForThisItem);
+                    remaining -= countInThisRow;
+
+                    const neededHeight = currentPageRows.length === 0 ? wid : (wid + LABEL_GAP_CM);
+
+                    if (currentPageRows.length > 0 && (currentUsedHeightCm + neededHeight) > usableH + 0.001) {
+                        pages.push(currentPageRows);
+                        currentPageRows = [];
+                        currentUsedHeightCm = 0;
+                    }
+
+                    currentPageRows.push({
+                        item: item,
+                        itemIndex: itemIdx + 1,
+                        count: countInThisRow,
+                        isDraft: isDraftMode
+                    });
+                    currentUsedHeightCm += (currentPageRows.length === 1 ? wid : (wid + LABEL_GAP_CM));
+                }
+            });
+
+            if (currentPageRows.length > 0) {
+                pages.push(currentPageRows);
+            }
+
+            return pages.length > 0 ? pages : [[]];
+        }
+
+        // 更新「① 單張標籤細節檢視」(體積與純中文名稱同行靠右，且無論大小尺寸皆省略品名後方重複縮寫)
+        function updateSingleDetailPreview() {
+            const selectedItem = printQueue.find(x => x.id === selectedQueueId);
+            const data = selectedItem ? selectedItem : readDraftFormData();
+
+            const lengthCm = data.lengthCm;
+            const widthCm = data.widthCm;
+            const isLargeTube = lengthCm >= 5.0 || widthCm >= 2.0;
+
+            if (isLargeTube) {
+                previewCard.classList.remove('label-sm');
+                previewCard.classList.add('label-lg');
+            } else {
+                previewCard.classList.remove('label-lg');
+                previewCard.classList.add('label-sm');
+            }
+
+            const scale = 52;
+            const pWidth = Math.max(lengthCm * scale, 235);
+            const pHeight = Math.max(widthCm * scale, 124);
+
+            previewCard.style.width = `${pWidth}px`;
+            previewCard.style.height = `${pHeight}px`;
+            previewDimensionTag.textContent = `${lengthCm.toFixed(1)} × ${widthCm.toFixed(1)} cm`;
+
+            if (selectedItem) {
+                const idx = printQueue.findIndex(x => x.id === selectedQueueId) + 1;
+                detailSourceBadge.textContent = `佇列 #${idx} 品項細節`;
+                detailSourceBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[rgb(14,57,99)] normal-case";
+            } else {
+                detailSourceBadge.textContent = "編輯中預覽";
+                detailSourceBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 normal-case";
+            }
+
+            pvPartNo.textContent = data.partNo;
+            pvShortTag.textContent = data.shortTag;
+            // 右上角已有縮寫，中段品名統一省略後方重複縮寫
+            pvItemName.textContent = data.chineseOnlyName;
+            pvVol.textContent = data.volText;
+
+            if (!data.lotNo) {
+                pvLotNo.textContent = "未填入工單批號";
+                pvLotNo.className = "font-semibold text-slate-400";
+            } else {
+                pvLotNo.textContent = data.lotNo;
+                pvLotNo.className = "font-semibold text-slate-800";
+            }
+
+            pvConc.textContent = data.concText;
+            pvDatePrefix.textContent = "DATE:";
+            pvPrepDate.textContent = data.prepDate;
+            pvExpDate.textContent = data.expDate;
+        }
+
+        // 更新「② A4 紙張排列即時模擬」
+        function updateA4SimulatorPreview() {
+            const isQueueMode = printQueue.length > 0;
+            const sourceList = isQueueMode
+                ? printQueue
+                : [{ ...readDraftFormData(), color: { bg: "#f8fafc", text: "#64748b", dot: "#94a3b8" } }];
+
+            const pages = buildA4RowBreakPages(sourceList, !isQueueMode);
+            const totalPages = pages.length;
+
+            if (currentSimPage > totalPages) currentSimPage = totalPages;
+            if (currentSimPage < 1) currentSimPage = 1;
+
+            a4PageStatsBadge.textContent = `共 ${totalPages} 頁 A4`;
+
+            if (totalPages > 1) {
+                pageNavBar.classList.remove('hidden');
+                pageIndicatorText.textContent = `第 ${currentSimPage} / ${totalPages} 頁`;
+                btnPrevPage.disabled = currentSimPage <= 1;
+                btnNextPage.disabled = currentSimPage >= totalPages;
+            } else {
+                pageNavBar.classList.add('hidden');
+            }
+
+            const currentRows = pages[currentSimPage - 1] || [];
+            let rowsHtml = '';
+
+            currentRows.forEach(rowObj => {
+                const { item, count, isDraft } = rowObj;
+                const wPx = item.lengthCm * 10;
+                const hPx = item.widthCm * 10;
+                const borderStyle = isDraft
+                    ? '1px dashed #cbd5e1'
+                    : '1px solid rgb(230,230,230)';
+
+                const miniText = item.shortTag.replace(/^Primary\s+/i, '');
+
+                let cellsHtml = '';
+                for (let c = 0; c < count; c++) {
+                    cellsHtml += `
+                        <div style="width: ${wPx}px; height: ${hPx}px; border: ${borderStyle}; background-color: ${item.color.bg}; color: ${item.color.text};"
+                             class="shrink-0 flex items-center justify-center text-[6.5px] font-bold code-font overflow-hidden select-none leading-none px-0.5">
+                            ${escapeHtml(miniText)}
+                        </div>
+                    `;
+                }
+
+                rowsHtml += `
+                    <div class="flex flex-row items-start justify-start w-full" style="gap: ${LABEL_GAP_CM * 10}px;">
+                        ${cellsHtml}
+                    </div>
+                `;
+            });
+
+            a4MiniFlowContainer.innerHTML = rowsHtml;
+
+            if (isQueueMode) {
+                a4LegendContainer.innerHTML = printQueue.map((item, idx) => `
+                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 code-font">
+                        <span class="w-2 h-2 rounded-full" style="background-color: ${item.color.dot};"></span>
+                        #${idx + 1} ${escapeHtml(item.shortTag)} (${escapeHtml(item.volText)}) ×${item.qty}
+                    </span>
+                `).join('');
+                a4OverflowNote.textContent = `第 ${currentSimPage} 頁模擬：標籤間隔 1 mm，不同品項已自動換行排列`;
+            } else {
+                a4LegendContainer.innerHTML = '';
+                a4OverflowNote.textContent = `虛線為編輯中預覽位置，點擊「➕ 加入待印標籤清單」後鎖定排版`;
+            }
+        }
+
+        function updateAllPreviews() {
+            updateSingleDetailPreview();
+            updateA4SimulatorPreview();
+        }
+
+        btnPrevPage.addEventListener('click', () => {
+            if (currentSimPage > 1) {
+                currentSimPage--;
+                updateA4SimulatorPreview();
+            }
+        });
+        btnNextPage.addEventListener('click', () => {
+            currentSimPage++;
+            updateA4SimulatorPreview();
+        });
+
+        function applyPresetDimensions(presetVal) {
+            if (presetVal === "eppendorf") {
+                labelLength.value = "2.6";
+                labelWidth.value = "1.5";
+            } else if (presetVal === "centrifuge") {
+                labelLength.value = "7.5";
+                labelWidth.value = "2.5";
+            }
+        }
+
+        presetSelect.addEventListener('change', () => {
+            applyPresetDimensions(presetSelect.value);
+            selectedQueueId = null;
+            if (printQueue.length > 0) renderQueueList();
+            updateAllPreviews();
+        });
+
+        labelLength.addEventListener('input', () => {
+            presetSelect.value = "custom";
+            selectedQueueId = null;
+            if (printQueue.length > 0) renderQueueList();
+            updateAllPreviews();
+        });
+        labelWidth.addEventListener('input', () => {
+            presetSelect.value = "custom";
+            selectedQueueId = null;
+            if (printQueue.length > 0) renderQueueList();
+            updateAllPreviews();
+        });
+
+        itemModeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === "preset") {
+                    presetDropdownContainer.classList.remove('hidden');
+                    syncFromItemSelect();
+                } else {
+                    presetDropdownContainer.classList.add('hidden');
+                }
+            });
+        });
+
+        function syncFromItemSelect() {
+            const code = itemSelect.value;
+            const info = ITEM_DATABASE[code];
+            if (info) {
+                itemName.value = info.name;
+                partNo.value = code;
+                concUnit.value = info.unit;
+                if (info.defaultVol !== undefined) {
+                    volValue.value = info.defaultVol;
+                }
+                if (info.defaultPreset) {
+                    presetSelect.value = info.defaultPreset;
+                    applyPresetDimensions(info.defaultPreset);
+                }
+                applySmartExpiration(prepDate.value);
+            }
+            selectedQueueId = null;
+            if (printQueue.length > 0) renderQueueList();
+            updateAllPreviews();
+        }
+
+        itemSelect.addEventListener('change', syncFromItemSelect);
+
+        [itemName, partNo, volValue, lotNo, concValue, concUnit, printQty].forEach(el => {
+            el.addEventListener('input', () => {
+                selectedQueueId = null;
+                if (printQueue.length > 0) renderQueueList();
+                updateAllPreviews();
+            });
+        });
+
+        prepDate.addEventListener('change', () => {
+            selectedQueueId = null;
+            applySmartExpiration(prepDate.value);
+            updateAllPreviews();
+        });
+
+        expDate.addEventListener('change', () => {
+            selectedQueueId = null;
+            validateExpiration();
+            updateAllPreviews();
+        });
+
+        btnResetInputs.addEventListener('click', () => {
+            itemSelect.value = "3AHCG13B";
+            syncFromItemSelect();
+            lotNo.value = "";
+            concValue.value = "";
+            printQty.value = "6";
+            initDefaultDates();
+            selectedQueueId = null;
+            if (printQueue.length > 0) renderQueueList();
+            updateAllPreviews();
+        });
+
+        // 原生 A4 多品項混尺寸、自動換行、間隔 1 mm、體積與純中文同行靠右向量列印引擎
+        btnPrintA4.addEventListener('click', () => {
+            if (printQueue.length === 0) {
+                alert("請先將至少一項品項加入待印標籤清單！");
+                return;
+            }
+
+            const pages = buildA4RowBreakPages(printQueue, false);
+            let pagesHtml = '';
+
+            pages.forEach(pageRows => {
+                let rowsHtml = '';
+
+                pageRows.forEach(rowObj => {
+                    const { item, count } = rowObj;
+                    const isLarge = item.lengthCm >= 5.0 || item.widthCm >= 2.0;
+                    const sizeClass = isLarge ? 'p-lg' : 'p-sm';
+
+                    let cardsHtml = '';
+                    for (let c = 0; c < count; c++) {
+                        cardsHtml += `
+                            <div class="print-label-card ${sizeClass}" style="width: ${item.lengthCm}cm; height: ${item.widthCm}cm;">
+                                <div class="p-top">
+                                    <span class="code-font p-part" style="font-weight:700; color:#1e293b;">${escapeHtml(item.partNo)}</span>
+                                    <span class="code-font p-short" style="font-weight:700; color:rgb(14,57,99);">${escapeHtml(item.shortTag)}</span>
+                                </div>
+                                <div class="p-name-vol">
+                                    <span class="p-name" style="font-weight:700; color:#0f172a;">${escapeHtml(item.chineseOnlyName)}</span>
+                                    <span class="code-font p-vol" style="color:#334155;"><span style="color:#94a3b8;">Vol:</span><strong>${escapeHtml(item.volText)}</strong></span>
+                                </div>
+                                <div class="code-font p-mid-wrap" style="color:#334155;">
+                                    <div class="p-meta"><span style="color:#94a3b8;">LOT:</span><strong>${escapeHtml(item.lotNo)}</strong></div>
+                                    <div class="p-meta p-conc-cell"><span style="color:#94a3b8;">Conc:</span>${escapeHtml(item.concText)}</div>
+                                </div>
+                                <div class="code-font p-bottom" style="color:#334155;">
+                                    <span><span style="color:#94a3b8;">DATE:</span>${escapeHtml(item.prepDate)}</span>
+                                    <span><span style="color:#94a3b8;">EXP:</span><strong style="color:#0f172a;">${escapeHtml(item.expDate)}</strong></span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    rowsHtml += `
+                        <div class="print-label-row">
+                            ${cardsHtml}
+                        </div>
+                    `;
+                });
+
+                pagesHtml += `
+                    <div class="print-a4-page">
+                        ${rowsHtml}
+                    </div>
+                `;
+            });
+
+            printMountArea.innerHTML = pagesHtml;
+
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        });
+
+        // 列印結束後清理 DOM 掛載區
+        window.addEventListener('afterprint', () => {
+            printMountArea.innerHTML = '';
+        });
+
+        // 頁面初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initDefaultDates();
+            syncFromItemSelect();
+            renderQueueList();
+            updateAllPreviews();
+        });
+    </script>
+</body>
+</html>
