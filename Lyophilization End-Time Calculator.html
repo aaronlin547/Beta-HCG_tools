@@ -175,7 +175,7 @@
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                                 <span>①</span> 預冷階段 (Pre-cooling)
                             </h3>
-                            <span class="text-xs font-bold text-blue-600 code-font">歷時 270 分鐘 (4.5 hr)</span>
+                            <span class="text-xs font-bold text-blue-600 code-font">歷時 240 分鐘 (4.0 hr)</span>
                         </div>
                         <div class="grid grid-cols-3 gap-3 text-xs">
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200">
@@ -184,7 +184,7 @@
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200">
                                 <span class="text-slate-400 block text-[10px]">維持時間 (TM)</span>
-                                <span class="font-bold text-slate-800 code-font text-sm">270 min</span>
+                                <span class="font-bold text-slate-800 code-font text-sm">240 min</span>
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-200">
                                 <span class="text-slate-400 block text-[10px]">真空設定 (HVAC)</span>
@@ -251,7 +251,7 @@
     </div>
 
     <script>
-        const PRECOOL_MINUTES = 270;
+        const PRECOOL_MINUTES = 240;
 
         const SOP_SEGMENTS = [
             { seg: "SEG 01", temp: -40.0, min: 1,   type: "起始段 (恆溫)" },
@@ -351,10 +351,10 @@
                 const timeCell = isStop ? `<span class="text-rose-400 font-bold">-1 (Hold)</span>` : `${s.min} 分`;
                 
                 const cumCell = isStop 
-                    ? `<span class="text-emerald-300 font-bold">2101 分 <span class="text-[11px] text-slate-300 font-normal">(約 35.0 hr)</span></span>` 
+                    ? `<div class="flex flex-col items-end leading-tight"><span class="text-emerald-300 font-bold">2101 分</span><span class="text-[11px] text-slate-300 font-normal whitespace-nowrap">(約 35.0 hr)</span></div>` 
                     : `${runningMins} 分`;
 
-                // 計算時間預估 (起算時間 + 預冷270分 + 該段累計程控時間)
+                // 計算時間預估 (起算時間 + 預冷240分 + 該段累計程控時間)
                 let estTimeCell = '--';
                 if (baseStartTime && !isNaN(baseStartTime.getTime())) {
                     const stepEndDate = new Date(baseStartTime.getTime() + (PRECOOL_MINUTES + runningMins) * 60 * 1000);
@@ -422,20 +422,20 @@
                 return;
             }
 
-            // 1. 預冷結束時間 (270 分鐘)
+            // 1. 預冷結束時間 (240 分鐘)
             const precoolEnd = new Date(startTime.getTime() + PRECOOL_MINUTES * 60 * 1000);
             const precoolFmt = format24HourDateTime(precoolEnd);
             precoolEndTimeDisplay.textContent = `${precoolFmt.fullStr} (${precoolFmt.dayBadge})`;
-            precoolDayBadge.textContent = `歷時 4.5 hr`;
+            precoolDayBadge.textContent = `歷時 4.0 hr`;
 
-            // 2. 總歷時與標準可收料時間 (預冷 270m + 程控 2101m = 2371m / 39.516 hr)
-            const totalMins = 270 + 2101;
+            // 2. 總歷時與標準可收料時間 (預冷 240m + 程控 2101m = 2341m / 39.016 hr)
+            const totalMins = PRECOOL_MINUTES + 2101;
             const finalEnd = new Date(startTime.getTime() + totalMins * 60 * 1000);
             const finalFmt = format24HourDateTime(finalEnd);
 
             finalEndTimeDisplay.textContent = `${finalFmt.fullStr} (${finalFmt.dayBadge})`;
             finalDayBadge.textContent = `製程停止 / 可收料`;
-            totalDurationText.textContent = `39 小時 31 分鐘 (${totalMins} 分鐘)`;
+            totalDurationText.textContent = `39 小時 01 分鐘 (${totalMins} 分鐘)`;
 
             // 最晚收料時間 = 完成時間 + 30 小時
             const deadlineDate = new Date(finalEnd.getTime() + 30 * 60 * 60 * 1000);
