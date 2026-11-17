@@ -515,7 +515,7 @@
     <div class="global-settings">
         <div class="form-group">
             <label for="targetVolume">💡 全域待製備體積 (mL)</label>
-            <input type="number" id="targetVolume" class="form-control code-font" value="30" step="any" min="0.001" oninput="syncVolume(this.value)">
+            <input type="number" id="targetVolume" class="form-control code-font" value="30" step="any" min="0.001" inputmode="decimal" oninput="syncVolume(this.value)">
         </div>
         <div style="flex: 1; min-width: 200px; font-size: 0.85rem; color: #4a5568;">
             * 此處設定會同步套用到各項目中。各項目的待製備體積亦可在下方單獨修改。
@@ -574,7 +574,7 @@
                 <input type="number" class="form-control measured-input code-font" data-item="cws2" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input code-font" data-item="cws2" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="cws2" value="30" step="any" inputmode="decimal" oninput="onSingleVolInput(this.value)" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws2"></div>
@@ -592,7 +592,7 @@
                 <input type="number" class="form-control measured-input code-font" data-item="cws3" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input code-font" data-item="cws3" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="cws3" value="30" step="any" inputmode="decimal" oninput="onSingleVolInput(this.value)" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-cws3"></div>
@@ -637,7 +637,7 @@
                 <input type="number" class="form-control measured-input code-font" data-item="qwscl" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input code-font" data-item="qwscl" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="qwscl" value="54" step="any" inputmode="decimal" oninput="onSingleVolInput(this.value)" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwscl"></div>
@@ -655,7 +655,7 @@
                 <input type="number" class="form-control measured-input code-font" data-item="qwsch" placeholder="請輸入平均實測值" step="any" inputmode="decimal">
                 <div style="margin-top: 5px; display:flex; flex-direction:column; gap:2px;">
                     <label style="font-size:0.75rem; color:#718096;">單項體積 (mL)</label>
-                    <input type="number" class="form-control vol-input code-font" data-item="qwsch" value="30" step="any" style="padding:4px 8px; font-size:0.9rem;">
+                    <input type="number" class="form-control vol-input code-font" data-item="qwsch" value="54" step="any" inputmode="decimal" oninput="onSingleVolInput(this.value)" style="padding:4px 8px; font-size:0.9rem;">
                 </div>
             </div>
             <div class="inline-result" id="result-qwsch"></div>
@@ -679,18 +679,34 @@
 
 <script>
     let currentMode = 'calibrator';
+    let hasAnalyzed = { calibrator: false, qc: false };
 
     function switchTab(mode) {
         currentMode = mode;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.batch-panel').forEach(panel => panel.classList.remove('active'));
         
+        const targetVolInput = document.getElementById('targetVolume');
         if (mode === 'calibrator') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             document.getElementById('panel-calibrator').classList.add('active');
+            if (targetVolInput) targetVolInput.value = '30';
+            ['cws1', 'cws2', 'cws3'].forEach(item => {
+                const volEl = document.querySelector(`.vol-input[data-item="${item}"]`);
+                if (volEl) volEl.value = '30';
+            });
         } else {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.getElementById('panel-qc').classList.add('active');
+            if (targetVolInput) targetVolInput.value = '54';
+            ['qwscl', 'qwsch'].forEach(item => {
+                const volEl = document.querySelector(`.vol-input[data-item="${item}"]`);
+                if (volEl) volEl.value = '54';
+            });
+        }
+
+        if (hasAnalyzed[mode]) {
+            executeBatchAnalysis(true);
         }
     }
 
@@ -700,6 +716,16 @@
             document.querySelectorAll('.vol-input').forEach(input => {
                 input.value = val;
             });
+            if (hasAnalyzed[currentMode]) {
+                executeBatchAnalysis(true);
+            }
+        }
+    }
+
+    function onSingleVolInput(val) {
+        let v = parseFloat(val);
+        if (!isNaN(v) && v > 0 && hasAnalyzed[currentMode]) {
+            executeBatchAnalysis(true);
         }
     }
 
@@ -749,6 +775,8 @@
         const dupCount = parseInt(selectEl.value, 10) || 3;
         const targetNames = (tab === 'cal') ? 'CWS-1、CWS-2、CWS-3' : 'QWS-CL、QWS-CH';
 
+        hasAnalyzed[tab === 'cal' ? 'calibrator' : 'qc'] = false;
+
         textarea.value = '';
         statusEl.textContent = `已辨識 0 筆測值 ｜ 依「${dupCount}重複分組」自動填入 ${targetNames} 平均實測值`;
 
@@ -764,9 +792,10 @@
         });
     }
 
-    function executeBatchAnalysis() {
+    function executeBatchAnalysis(isAutoRecalc = false) {
         try {
             let isCal = (currentMode === 'calibrator');
+            let defaultVol = isCal ? 30.0 : 54.0;
             let itemsToAnalyze = isCal ? ['cws1', 'cws2', 'cws3'] : ['qwscl', 'qwsch'];
             let oosItems = [];
 
@@ -777,7 +806,8 @@
                 if (resultDiv) resultDiv.style.display = "none";
 
                 if (!inputEl || inputEl.value.trim() === "") {
-                    if (resultDiv) {
+                    hasAnalyzed[currentMode] = false;
+                    if (!isAutoRecalc && resultDiv) {
                         resultDiv.className = "inline-result error-info";
                         resultDiv.innerHTML = `❌ 請輸入平均實測值`;
                         resultDiv.style.display = "block";
@@ -786,7 +816,7 @@
                 }
                 let volEl = document.querySelector(`.vol-input[data-item="${item}"]`);
                 if (volEl && (volEl.value.trim() === "" || parseFloat(volEl.value) <= 0)) {
-                    volEl.value = "30";
+                    volEl.value = String(defaultVol);
                 }
             }
 
@@ -822,15 +852,21 @@
 
             // 若有 OOS 項目，跳出彈窗阻斷後續調配
             if (oosItems.length > 0) {
-                let modal = document.getElementById('oosModal');
-                let modalBody = document.getElementById('oosModalBody');
-                let listHtml = "<ul style='padding-left:20px;'>";
-                oosItems.forEach(text => { listHtml += `<li style='margin-bottom:8px;'>${text}</li>`; });
-                listHtml += "</ul><p style='margin-top:15px; font-weight:bold; color:#9b2c2c;'>🚨 檢驗與量測結果偏離規格(OOS)，請暫停工作</p>";
-                modalBody.innerHTML = listHtml;
-                modal.classList.add('show');
+                hasAnalyzed[currentMode] = false;
+                if (!isAutoRecalc) {
+                    let modal = document.getElementById('oosModal');
+                    let modalBody = document.getElementById('oosModalBody');
+                    let listHtml = "<ul style='padding-left:20px;'>";
+                    oosItems.forEach(text => { listHtml += `<li style='margin-bottom:8px;'>${text}</li>`; });
+                    listHtml += "</ul><p style='margin-top:15px; font-weight:bold; color:#9b2c2c;'>🚨 檢驗與量測結果偏離規格(OOS)，請暫停工作</p>";
+                    modalBody.innerHTML = listHtml;
+                    modal.classList.add('show');
+                }
                 return;
             }
+
+            // 標記目前分頁已完成有效計算，供後續修改體積時即時連動更新
+            hasAnalyzed[currentMode] = true;
 
             // 2. 當 CWS-3 落在綠燈或可校正區，解除 CWS-2 的 OOS 要求並計算調配
             let isLowMeasuredTooLow = (lowVal < 49.5);
@@ -851,7 +887,7 @@
 
             // 渲染 CWS-2 / QWS-CL
             let lowDiv = document.getElementById(`result-${lowKey}`);
-            let lowVol = parseFloat(document.querySelector(`.vol-input[data-item="${lowKey}"]`).value) || 30.0;
+            let lowVol = parseFloat(document.querySelector(`.vol-input[data-item="${lowKey}"]`).value) || defaultVol;
             let targetLow = 55.0;
             let highSpikeConc = isHighGreen ? highVal : 5500.0;
 
@@ -885,20 +921,20 @@
 
             // 渲染 CWS-3 / QWS-CH
             let highDiv = document.getElementById(`result-${highKey}`);
-            let highVol = parseFloat(document.querySelector(`.vol-input[data-item="${highKey}"]`).value) || 30.0;
+            let highVol = parseFloat(document.querySelector(`.vol-input[data-item="${highKey}"]`).value) || defaultVol;
             let targetHigh = 5500.0;
-            let spikeAwsConc = 550000.0;
+            let spikePwsConc = 550000.0;
 
             if (isHighGreen) {
                 highDiv.className = "inline-result pass";
                 highDiv.innerHTML = `<div class="result-title"><span>🟢 符合目標規格</span></div><p>實測濃度落於允許範圍內，無需進行任何校正調配。</p>`;
                 highDiv.style.display = "block";
             } else if (highVal >= 4400 && highVal < 4950) {
-                let v1 = ((targetHigh - highVal) * highVol) / (spikeAwsConc - targetHigh);
+                let v1 = ((targetHigh - highVal) * highVol) / (spikePwsConc - targetHigh);
                 highDiv.className = "inline-result adjust";
                 highDiv.innerHTML = `
                     <div class="result-title"><span>🟡 觸發調配：濃度偏低修正</span></div>
-                    <p>需額外添加：<strong>抗原工作液 (AWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL</p>
+                    <p>需額外添加：<strong>蛋白工作液 (PWS)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v1.toFixed(3)}</strong> mL</p>
                     <span class="formula-display">SOP 公式: V1 = (5500 - ${highVal}) × ${highVol} ÷ (550000 - 5500)</span>
                 `;
                 highDiv.style.display = "block";
@@ -907,7 +943,7 @@
                 highDiv.className = "inline-result adjust";
                 highDiv.innerHTML = `
                     <div class="result-title"><span>🟡 觸發調配：濃度偏高稀釋</span></div>
-                    <p>需額外添加：<strong>抗原稀釋液 (Antigen Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL</p>
+                    <p>需額外添加：<strong>蛋白稀釋液 (Protein Diluent)</strong><br>所需添加體積：<strong style="font-size:1.15rem; color:#c05621;">${v2.toFixed(3)}</strong> mL</p>
                     <span class="formula-display">SOP 公式: V2 = ((${highVal} ÷ 5500) - 1) × ${highVol}</span>
                 `;
                 highDiv.style.display = "block";
